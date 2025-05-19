@@ -42,6 +42,10 @@ void launchKernel(const KernelConfig& config, const float* __restrict__ A, const
                         throw std::invalid_argument("Unknown Simon kernel ID");
                 }
             break;
+            case KernelType::CUBLAS:
+                // Only one reference so need for switch here
+                cublas::run_sgemm_cublas(A, B, C, M, N, K, alpha, beta, handle);
+                break;
             // Hopper TODO
             default:
                 throw std::invalid_argument("Unknown kernel type");

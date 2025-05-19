@@ -16,7 +16,8 @@
  */
 enum class KernelType {
     SIMON,
-    HOPPER
+    HOPPER,
+    CUBLAS
 };
 
 /**
@@ -37,7 +38,7 @@ enum class HopperKernelVariant {
  * @brief Configuration for selecting and launching a specific kernel.
  */
 struct KernelConfig {
-    KernelType type;   /**< The type of kernel implementation (Simon or Hopper) */
+    KernelType type;   /**< The type of kernel implementation (Simon, Hopper or CUBLAS) */
     int kernel_id;     /**< The kernel variant ID */
 
     /**

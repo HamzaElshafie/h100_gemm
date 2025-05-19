@@ -90,7 +90,9 @@ double measureExecutionTime(Function function) {
 }
 
 /**
- * @brief Measure GPU kernel execution time using CUDA events
+ * @brief Measure GPU kernel execution time using CUDA events.
+ *
+ * @note This function is ideal for timing a standalone kernel launch. For benchmarking repeated kernel executions, consider running the kernel multiple times in a loop and averaging the timings for more accurate results.
  *
  * @tparam KernelFunc  Kernel function type
  * @tparam Args        Kernel argument types
@@ -136,8 +138,7 @@ float measureKernelTime(KernelFunc kernel) {
  * @param rtol        Relative tolerance (default: 1e-5)
  * @return bool       True if results match within tolerances, false otherwise
  */
-bool compareResults(const float *cpu_result, const float *gpu_result,
-                    size_t size, float atol = 1e-4f, float rtol = 1e-5f) {
+bool compareResults(const float *cpu_result, const float *gpu_result, size_t size, float atol = 1e-4f, float rtol = 1e-5f) {
     for (size_t i = 0; i < size; i++) {
         float a = cpu_result[i];
         float b = gpu_result[i];
