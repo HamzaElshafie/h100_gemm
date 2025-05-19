@@ -27,11 +27,9 @@ __global__ void sgemm_naive(const float* __restrict__ A, const float* __restrict
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int column = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (row < M && column < K)
-    {
+    if (row < M && column < K) {
         float cumulative_sum = 0.0f;
-        for (int n = 0; n < N; n++) // Loop over shared dimension
-        {
+        for (int n = 0; n < N; n++) { // Loop over shared dimension
             cumulative_sum += A[row * N + n] * B[n * K + column];
         }
         C[row * K + column] = (alpha * cumulative_sum) + (beta * C[row * K + column]);

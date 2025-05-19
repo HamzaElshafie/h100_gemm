@@ -18,18 +18,17 @@ namespace simon
     /**
      * @brief Launches a naive sgemm kernel
      * 
-     * @param[in] A Pointer to the input matrix A of dimensions M x N
-     * @param[in] B Pointer to the input matrix B of dimensions N x K
-     * @param[out] C Pointer to the output matrix C of dimensions M x K
-     * @param[in] M Number of rows in matrix A and matrix C
-     * @param[in] N Number of columns in matrix A and rows in matrix B (shared dim)
-     * @param[in] K Number of columns in matrix B and matrix C
-     * @param[in] alpha Scalar multiplier for the product of matrices A and B
-     * @param[in] beta Scalar multiplier for the existing values in matrix C
+     * @param A       Pointer to input matrix A, stored in row-major order
+     * @param B       Pointer to input matrix B
+     * @param C       Pointer to output matrix C
+     * @param M       Number of rows in matrix A and C
+     * @param N       Number of columns in A and rows in B (shared dimension)
+     * @param K       Number of columns in matrices B and C
+     * @param alpha   Scalar multiplier for the matrix product (A @ B)
+     * @param beta    Scalar multiplier for the existing values in matrix C
      */
     void run_sgemm_naive(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C, 
-        int M, int N, int K, float alpha, float beta)
-        {
+        int M, int N, int K, float alpha, float beta) {
             // Grid configs
             dim3 gridDim(CEIL_DIV(K, 32), CEIL_DIV(M, 32));
             dim3 blockDim(32, 32);
