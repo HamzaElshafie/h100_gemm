@@ -35,6 +35,18 @@
     } while (0)
 
 /**
+ * @brief Integer division with rounding up.
+ *
+ * Computes the ceiling of integer division between two numbers. Useful for calculating
+ * the number of blocks needed to cover a size with a fixed block size.
+ *
+ * @param value The total number of items (e.g. threads, num_rows, num_columns).
+ * @param divisor The size of each unit (e.g. block size).
+ * @return The minimum number of units needed to fully cover the total value.
+ */
+#define CEIL_DIV(value, divisor) (((value) + (divisor) - 1) / (divisor))
+
+/**
  * @brief Initialise multiple arrays with random values in a specified range
  *
  * @param arrays     Array of pointers to initialize
