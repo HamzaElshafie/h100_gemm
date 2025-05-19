@@ -1,8 +1,10 @@
 #pragma once
 
 #include <iostream>
-#include <launcher.cu>
+#include <cuda_runtime.h>
 #include <cublas_v2.h>
+
+#include "launcher.cuh"
 
 enum KernelID
 {

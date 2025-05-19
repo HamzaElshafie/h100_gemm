@@ -34,5 +34,7 @@ namespace simon
             dim3 gridDim(CEIL_DIV(K, 32), CEIL_DIV(M, 32));
             dim3 blockDim(32, 32);
             sgemm_naive<<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
+            CUDA_CHECK(cudaGetLastError());
+            CUDA_CHECK(cudaDeviceSynchronize());
         }
 }

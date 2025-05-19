@@ -4,8 +4,7 @@
 #include <cublas_v2.h>
 #include <stdexcept>
 
-#include <launcher.cu>
-#include "utils.h"
+#include "launcher.cuh"
 
 void launchKernel(KernelID kernelID, const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C, 
     int M, int N, int K, float alpha, float beta, cublasHandle_t handle)
