@@ -7,10 +7,11 @@
 #include <iostream>
 #include <stdlib.h>
 #include <cuda_runtime.h>
+#include <cublas_v2.h>
 #include <cmath>
 
-#include <utils.h>
-#include <kernel01_naive.cuh>
+#include "utils.h"
+#include "kernel01_naive.cuh"
 
 namespace simon
 {
@@ -26,12 +27,12 @@ namespace simon
      * @param[in] alpha Scalar multiplier for the product of matrices A and B
      * @param[in] beta Scalar multiplier for the existing values in matrix C
      */
-    void run_sgmem_naive(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C, 
+    void run_sgemm_naive(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C, 
         int M, int N, int K, float alpha, float beta)
         {
             // Grid configs
             dim3 gridDim(CEIL_DIV(K, 32), CEIL_DIV(M, 32));
             dim3 blockDim(32, 32);
-            naive_matmul<<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
+            sgemm_naive<<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
         }
 }
