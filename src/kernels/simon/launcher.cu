@@ -74,6 +74,6 @@ void run_sgemm_cublas(const float* __restrict__ A, const float* __restrict__ B, 
     if (stat != CUBLAS_STATUS_SUCCESS) {
         std::cerr << "cuBLAS cublasGemmEx failed!" << std::endl;
     }
-    CUDA_CHECK(cudaDeviceSynchronise());
+    CUDA_CHECK(cudaDeviceSynchronize());
 }
 }

@@ -15,6 +15,7 @@
 #include <ctime>
 #include <cmath>
 #include <cuda_runtime.h>
+#include <vector>
 
 /**
  * @brief CUDA error checking macro
@@ -59,18 +60,15 @@
 void initialiseArrays(float **arrays, int num_arrays, size_t size, float min = 0.0f, float max = 1.0f, unsigned int seed = 0)
 {
     // Set random seed
-    if (seed == 0)
-    {
+    if (seed == 0) {
         seed = static_cast<unsigned int>(time(0)); // get current time
     }
     srand(seed);
 
     float range = max - min;
 
-    for (int i = 0; i < num_arrays; i++)
-    { // Iterate through each array pointer
-        for (size_t j = 0; j < size; j++)
-        { // Iterate through each element
+    for (int i = 0; i < num_arrays; i++) { // Iterate through each array pointer
+        for (size_t j = 0; j < size; j++) { // Iterate through each element
             arrays[i][j] = min + (static_cast<float>(rand()) / RAND_MAX) * range;
         }
     }
@@ -84,8 +82,7 @@ void initialiseArrays(float **arrays, int num_arrays, size_t size, float min = 0
  * @return double   Execution time in milliseconds
  */
 template <typename Function>
-double measureExecutionTime(Function function)
-{
+double measureExecutionTime(Function function) {
     auto start = std::chrono::steady_clock::now();
     function();
     auto end = std::chrono::steady_clock::now();
@@ -107,8 +104,7 @@ double measureExecutionTime(Function function)
  * @return float       Execution time in milliseconds
  */
 template <typename KernelFunc>
-float measureKernelTime(KernelFunc kernel)
-{
+float measureKernelTime(KernelFunc kernel) {
     cudaEvent_t start;
     cudaEvent_t stop;
     float elapsed_time;
@@ -146,17 +142,14 @@ float measureKernelTime(KernelFunc kernel)
  * @param rtol        Relative tolerance (default: 1e-5).
  * @return bool       True if all elements match within tolerances, false otherwise.
  */
-bool compareResults(const float *ref_output, const float *test_output, size_t size, float atol = 1e-4f, float rtol = 1e-5f)
-{
-    for (size_t i = 0; i < size; i++)
-    {
+bool compareResults(const float *ref_output, const float *test_output, size_t size, float atol = 1e-4f, float rtol = 1e-5f) {
+    for (size_t i = 0; i < size; i++) {
         float a = ref_output[i];
         float b = test_output[i];
         float abs_diff = std::fabs(a - b);
         float rel_diff = abs_diff / std::fmax(std::fabs(a), std::fabs(b));
 
-        if (abs_diff > atol && rel_diff > rtol)
-        {
+        if (abs_diff > atol && rel_diff > rtol) {
             std::cout << "Mismatch at index " << i
                       << ": Reference = " << a
                       << ", Test = " << b
@@ -168,5 +161,94 @@ bool compareResults(const float *ref_output, const float *test_output, size_t si
     }
     return true;
 }
+
+/**
+ * @brief Resource manager to track and cleanup CUDA/CPU resources
+ *
+ * Provides RAII-style management of CUDA and CPU resources including:
+ * - Host memory pointers
+ * - Device memory pointers
+ * - CUDA events
+ * - cuBLAS handles
+ *
+ * Resources are automatically freed when the manager goes out of scope.
+ */
+class ResourceManager {
+
+private:
+    std::vector<float *> host_ptrs;
+    std::vector<float *> device_ptrs;
+    std::vector<cudaEvent_t> events;
+    cublasHandle_t *cublas_handle;
+
+public:
+    ResourceManager() : cublas_handle(nullptr) {}
+
+    /**
+     * @brief Add a host memory pointer to be managed
+     * @param ptr Pointer to host memory
+     */
+    void add_host_ptr(float *ptr) {
+        if (ptr) {
+            host_ptrs.push_back(ptr);
+        }
+    }
+
+    /**
+     * @brief Add a device memory pointer to be managed
+     * @param ptr Pointer to device memory
+     */
+    void add_device_ptr(float *ptr) {
+        if (ptr) {
+            device_ptrs.push_back(ptr);
+        }
+    }
+
+    /**
+     * @brief Add a CUDA event to be managed
+     * @param event CUDA event handle
+     */
+    void add_event(cudaEvent_t event) {
+        events.push_back(event);
+    }
+
+    /**
+     * @brief Set the cuBLAS handle to be managed
+     * @param handle Pointer to cuBLAS handle
+     */
+    void set_cublas_handle(cublasHandle_t *handle) {
+        cublas_handle = handle;
+    }
+
+    /**
+     * @brief Destructor that frees all managed resources
+     */
+    ~ResourceManager() {
+
+        // Free host memory
+        for (auto ptr : host_ptrs) {
+            if (ptr) {
+                free(ptr);
+            }
+        }
+
+        // Free device memory
+        for (auto ptr : device_ptrs) {
+            if (ptr) {
+                CUDA_CHECK(cudaFree(ptr));
+            }
+        }
+
+        // Destroy events
+        for (auto event : events) {
+            CUDA_CHECK(cudaEventDestroy(event));
+        }
+
+        // Destroy cuBLAS handle
+        if (cublas_handle) {
+            cublasDestroy(*cublas_handle);
+        }
+    }
+};
 
 #endif
