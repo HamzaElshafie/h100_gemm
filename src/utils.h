@@ -59,15 +59,18 @@
 void initialiseArrays(float **arrays, int num_arrays, size_t size, float min = 0.0f, float max = 1.0f, unsigned int seed = 0)
 {
     // Set random seed
-    if (seed == 0) {
+    if (seed == 0)
+    {
         seed = static_cast<unsigned int>(time(0)); // get current time
     }
     srand(seed);
 
     float range = max - min;
 
-    for (int i = 0; i < num_arrays; i++) { // Iterate through each array pointer
-        for (size_t j = 0; j < size; j++) { // Iterate through each element
+    for (int i = 0; i < num_arrays; i++)
+    { // Iterate through each array pointer
+        for (size_t j = 0; j < size; j++)
+        { // Iterate through each element
             arrays[i][j] = min + (static_cast<float>(rand()) / RAND_MAX) * range;
         }
     }
@@ -81,7 +84,8 @@ void initialiseArrays(float **arrays, int num_arrays, size_t size, float min = 0
  * @return double   Execution time in milliseconds
  */
 template <typename Function>
-double measureExecutionTime(Function function) {
+double measureExecutionTime(Function function)
+{
     auto start = std::chrono::steady_clock::now();
     function();
     auto end = std::chrono::steady_clock::now();
@@ -103,7 +107,8 @@ double measureExecutionTime(Function function) {
  * @return float       Execution time in milliseconds
  */
 template <typename KernelFunc>
-float measureKernelTime(KernelFunc kernel) {
+float measureKernelTime(KernelFunc kernel)
+{
     cudaEvent_t start;
     cudaEvent_t stop;
     float elapsed_time;
@@ -129,26 +134,32 @@ float measureKernelTime(KernelFunc kernel) {
 }
 
 /**
- * @brief Compare results between CPU and GPU outputs using absolute and relative tolerance
+ * @brief Compare two arrays of floating-point results using absolute and relative tolerance.
  *
- * @param cpu_result  CPU computed results
- * @param gpu_result  GPU computed results
- * @param size        Number of elements to compare
- * @param atol        Absolute tolerance (default: 1e-4)
- * @param rtol        Relative tolerance (default: 1e-5)
- * @return bool       True if results match within tolerances, false otherwise
+ * Compares a reference array to a test array, element-wise, using both absolute and relative tolerances.
+ * Prints the first mismatch found.
+ *
+ * @param ref_output  Reference result array.
+ * @param test_output Test result array.
+ * @param size        Number of elements to compare.
+ * @param atol        Absolute tolerance (default: 1e-4).
+ * @param rtol        Relative tolerance (default: 1e-5).
+ * @return bool       True if all elements match within tolerances, false otherwise.
  */
-bool compareResults(const float *cpu_result, const float *gpu_result, size_t size, float atol = 1e-4f, float rtol = 1e-5f) {
-    for (size_t i = 0; i < size; i++) {
-        float a = cpu_result[i];
-        float b = gpu_result[i];
+bool compareResults(const float *ref_output, const float *test_output, size_t size, float atol = 1e-4f, float rtol = 1e-5f)
+{
+    for (size_t i = 0; i < size; i++)
+    {
+        float a = ref_output[i];
+        float b = test_output[i];
         float abs_diff = std::fabs(a - b);
         float rel_diff = abs_diff / std::fmax(std::fabs(a), std::fabs(b));
 
-        if (abs_diff > atol && rel_diff > rtol) {
+        if (abs_diff > atol && rel_diff > rtol)
+        {
             std::cout << "Mismatch at index " << i
-                      << ": CPU = " << a
-                      << ", GPU = " << b
+                      << ": Reference = " << a
+                      << ", Test = " << b
                       << ", abs diff = " << abs_diff
                       << ", rel diff = " << rel_diff
                       << std::endl;

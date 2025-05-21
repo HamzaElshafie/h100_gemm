@@ -14,9 +14,10 @@
  */
 void printUsage() {
     std::cout << "Usage: ./sgemm <implementation> <kernel_ID_number>\n"
-              << "  implementation: simon | hopper\n"
+              << "  Implementation: simon | hopper | cublas\n"
               << "  ID:       0, 1, 2, ...\n" // TODO: Print last kernel number for each implementation
-              << "Example: ./sgemm simon 0\n";
+              << "Example: ./sgemm simon 0\n"
+              << "(Note): To run cublas you must use ID=0. ./sgemm cublas 0\n"
 }
 
 /**
@@ -71,13 +72,13 @@ int main(int argc, char** argv) {
         // Calculate memory size required (Allocate for largest size and reuse for smaller matrices)
         int max_size = sizes.back();
         std::cout << "Max size: " << max_size << std::endl;
-        size_t size = max_size * max_size * sizeof(float);
+        size_t mem_size = max_size * max_size * sizeof(float);
 
         // Allocate host memory
-        float* A_host = (float*)malloc(size);
-        float* B_host = (float*)malloc(size);
-        float* C_host = (float*)malloc(size);
-        float* C_host_ref = (float*)malloc(size);
+        float* A_host = (float*)malloc(mem_size);
+        float* B_host = (float*)malloc(mem_size);
+        float* C_host = (float*)malloc(mem_size);
+        float* C_host_ref = (float*)malloc(mem_size);
 
         // Initialise matrices
         float* matrices[] = {A_host, B_host, C_host};
@@ -89,16 +90,16 @@ int main(int argc, char** argv) {
         float* C_device;
         float* C_device_ref;
 
-        CUDA_CHECK(cudaMalloc((void**)&A_device, size));
-        CUDA_CHECK(cudaMalloc((void**)&B_device, size));
-        CUDA_CHECK(cudaMalloc((void**)&C_device, size));
-        CUDA_CHECK(cudaMalloc((void**)&C_device_ref, size));
+        CUDA_CHECK(cudaMalloc((void**)&A_device, mem_size));
+        CUDA_CHECK(cudaMalloc((void**)&B_device, mem_size));
+        CUDA_CHECK(cudaMalloc((void**)&C_device, mem_size));
+        CUDA_CHECK(cudaMalloc((void**)&C_device_ref, mem_size));
 
         // Copy data from host to device
-        CUDA_CHECK(cudaMemcpy(A_device, A_host, size, cudaMemcpyHostToDevice));
-        CUDA_CHECK(cudaMemcpy(B_device, B_host, size, cudaMemcpyHostToDevice));
-        CUDA_CHECK(cudaMemcpy(C_device, C_host, size, cudaMemcpyHostToDevice));
-        CUDA_CHECK(cudaMemcpy(C_device_ref, C_host, size, cudaMemcpyHostToDevice));
+        CUDA_CHECK(cudaMemcpy(A_device, A_host, mem_size, cudaMemcpyHostToDevice));
+        CUDA_CHECK(cudaMemcpy(B_device, B_host, mem_size, cudaMemcpyHostToDevice));
+        CUDA_CHECK(cudaMemcpy(C_device, C_host, mem_size, cudaMemcpyHostToDevice));
+        CUDA_CHECK(cudaMemcpy(C_device_ref, C_host, mem_size, cudaMemcpyHostToDevice));
 
         cublasHandle_t handle;
         if (cublasCreate(&handle)) {
@@ -112,13 +113,24 @@ int main(int argc, char** argv) {
         cudaEventCreate(&start);
         cudaEventCreate(&stop);
 
+        // 
         int repeat = 50;
-        for (int size: size) {
+        for (int size: sizes) {
             int M = size;
             int N = size;
             int K = size;
 
-            // TODO
+            std::cout << "Dimensions (M = N = K) = " << M << " Alpha: " << alpha << "Beta " << beta << std::endl;
+
+            // Run cuBLAS and custom kernel to check for correctness and warmup
+            if (kernel_id != 0) {
+                // Custom op
+                launchKernel(config, A_device, B_device, C_device, M, N, K, alpha, beta, handle);
+                // cuBLAS op
+                KernelConfig cublas_config = (KernelType::CUBLAS, 0);
+                launchKernel(cublas_config, A_device, B_device, C_device_ref, M, N, K, alpha, beta, handle);
+
+            }
         }
 
     }
