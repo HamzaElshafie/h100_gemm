@@ -57,8 +57,7 @@
  * @param max       Maximum value for random numbers (default: 1.0)
  * @param seed       Seed for random generator, 0 means use time(0) (default: 0)
  */
-void initialiseArrays(float **arrays, int num_arrays, size_t size, float min = 0.0f, float max = 1.0f, unsigned int seed = 0)
-{
+inline void initialiseArrays(float **arrays, int num_arrays, size_t size, float min = 0.0f, float max = 1.0f, unsigned int seed = 0) {
     // Set random seed
     if (seed == 0) {
         seed = static_cast<unsigned int>(time(0)); // get current time
@@ -142,7 +141,7 @@ float measureKernelTime(KernelFunc kernel) {
  * @param rtol        Relative tolerance (default: 1e-5).
  * @return bool       True if all elements match within tolerances, false otherwise.
  */
-bool compareResults(const float *ref_output, const float *test_output, size_t size, float atol = 1e-4f, float rtol = 1e-5f) {
+inline bool compareResults(const float *ref_output, const float *test_output, size_t size, float atol = 1e-4f, float rtol = 1e-5f) {
     for (size_t i = 0; i < size; i++) {
         float a = ref_output[i];
         float b = test_output[i];
@@ -250,5 +249,4 @@ public:
         }
     }
 };
-
 #endif

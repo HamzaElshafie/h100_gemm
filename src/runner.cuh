@@ -9,7 +9,7 @@
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
-#include "launcher.cuh"
+#include "kernels/simon/launcher.cuh"
 
 /**
  * @brief Types of supported kernel implementations.

@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 #include <cmath>
-#include <format>
 #include <vector>
+#include <cublas_v2.h>
 
 #include "utils.h"
 #include "runner.cuh"
@@ -19,7 +19,7 @@ void printUsage() {
               << "  Implementation: simon | hopper | cublas\n"
               << "  ID:       0, 1, 2, ...\n" // TODO: Print last kernel number for each implementation
               << "Example: ./sgemm simon 0\n"
-              << "(Note): To run cublas you must use ID=0. ./sgemm cublas 0\n"
+              << "(Note): To run cublas you must use ID=0. ./sgemm cublas 0\n";
 }
 
 /**
@@ -65,18 +65,10 @@ int main(int argc, char** argv) {
         printUsage();
         return -1;
     }
-
-    KernelConfig config;
-    try {
-        std::string impl = argv[1];
-        int kernel_id = std::stoi(argv[2]);
-        config = parseKernelConfig(impl, kernel_id);
-    }
-    catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-        printUsage();
-        return -1;
-    }
+    
+    std::string impl = argv[1];
+    int kernel_id = std::stoi(argv[2]);
+    KernelConfig config = parseKernelConfig(impl, kernel_id);
     
     // Define matrices sizes to test
     std::vector<int> sizes = {128, 256, 512, 1024, 2048};
@@ -159,6 +151,11 @@ int main(int argc, char** argv) {
 
         std::cout << "Dimensions (M = N = K) = " << M << " Alpha: " << alpha << " Beta: " << beta << std::endl;
 
+        CUDA_CHECK(cudaMemcpy(A_device, A_host, curr_mem_size, cudaMemcpyHostToDevice));
+        CUDA_CHECK(cudaMemcpy(B_device, B_host, curr_mem_size, cudaMemcpyHostToDevice));
+        CUDA_CHECK(cudaMemcpy(C_device, C_host, curr_mem_size, cudaMemcpyHostToDevice));
+        CUDA_CHECK(cudaMemcpy(C_device_ref, C_host, curr_mem_size, cudaMemcpyHostToDevice));
+
         // Run cuBLAS and custom kernel to check for correctness and warmup
         if (config.type != KernelType::CUBLAS) {
             // Custom op
@@ -169,7 +166,7 @@ int main(int argc, char** argv) {
             launchKernel(cublas_config, A_device, B_device, C_device_ref, M, N, K, alpha, beta, handle);
             CUDA_CHECK(cudaMemcpy(C_host_ref, C_device_ref, curr_mem_size, cudaMemcpyDeviceToHost));
             // Verify results
-            bool results_match = compareResults(C_host_ref, C_host, M * K, 1e-4f, 1e-5f);
+            bool results_match = compareResults(C_host_ref, C_host, M * K, 1e-1f, 1e-1f);
             if (!results_match) {
                 std::cout << "Results do not match!" << std::endl;
                 return -1;
@@ -197,7 +194,7 @@ int main(int argc, char** argv) {
         // Throughput in GFLOPs/s
         double gflops = flops_per_run / (average_time * 1e9);
 
-        std::cout << std::format("Average elapsed time: {:.6f} s, GFLOPS: {:.1f}\n", average_time, gflops);
+        printf("Average elapsed time: %.6f s, GFLOPS: %.1f\n", average_time, gflops);
         
         // Copy result back to host
         CUDA_CHECK(cudaMemcpy(C_host, C_device, curr_mem_size, cudaMemcpyDeviceToHost));

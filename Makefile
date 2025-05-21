@@ -1,5 +1,6 @@
-CUDA_PATH ?= /usr/local/cuda
-HOST_COMPILER ?= g++
+CONDA_ENV_PATH ?= /root/miniconda3/envs/cuda_env
+CUDA_PATH ?= $(CONDA_ENV_PATH)
+HOST_COMPILER ?= /root/miniconda3/envs/cuda_env/bin/x86_64-conda-linux-gnu-g++
 NVCC          := $(CUDA_PATH)/bin/nvcc -ccbin $(HOST_COMPILER)
 BUILDDIR      := build
 
@@ -14,15 +15,15 @@ CUDA_FLAGS := $(CUDA_ARCH) \
              --compiler-options "$(CXXFLAGS)"
 
 # Include paths
-INCLUDES  := -I$(CUDA_PATH)/include -I./src
+INCLUDES := -I$(CUDA_PATH)/include -I./src -I./src/kernels -I./src/kernels/simon
 
 # Source files
-SOURCES   := $(wildcard src/*.cu)
-HEADERS   := $(wildcard src/*.cuh src/*.h)
+SOURCES   := $(shell find src -name '*.cu')
+HEADERS   := $(shell find src -name '*.cuh' -o -name '*.h')
 OBJECTS   := $(SOURCES:src/%.cu=$(BUILDDIR)/%.o)
 
 # Libraries
-LIBRARIES := -lcudart -lcublas
+LIBRARIES := -L$(CUDA_PATH)/lib64 -lcudart -lcublas
 
 # Binary
 TARGET    := sgemm
@@ -34,7 +35,7 @@ $(BUILDDIR)/$(TARGET): $(OBJECTS)
 	$(NVCC) $(CUDA_FLAGS) $(OBJECTS) -o $@ $(LIBRARIES)
 
 $(BUILDDIR)/%.o: src/%.cu $(HEADERS)
-	@mkdir -p $(BUILDDIR)
+	@mkdir -p $(dir $@)
 	$(NVCC) $(CUDA_FLAGS) $(INCLUDES) -c $< -o $@
 
 clean:

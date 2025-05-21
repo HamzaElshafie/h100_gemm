@@ -11,7 +11,7 @@
 #include <stdexcept>
 
 #include "runner.cuh"
-#include "launcher.cuh"
+#include "kernels/simon/launcher.cuh"
 
 /**
  * @brief Launches the selected kernel based on the provided configuration.
