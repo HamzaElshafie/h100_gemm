@@ -4,7 +4,6 @@ HOST_COMPILER ?= /root/miniconda3/envs/cuda_env/bin/x86_64-conda-linux-gnu-g++
 NVCC          := $(CUDA_PATH)/bin/nvcc -ccbin $(HOST_COMPILER)
 BUILDDIR      := build
 
-# RTX 4090 architecture (Ada Lovelace)
 CUDA_ARCH := -arch=sm_89
 
 # Common flags
