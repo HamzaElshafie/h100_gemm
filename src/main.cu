@@ -174,6 +174,10 @@ int main(int argc, char** argv) {
                 std::cout << "Results match!" << std::endl;
             }
         }
+        
+        // Warmup cuBLAS kernel
+        KernelConfig cublas_config(KernelType::CUBLAS, 0);
+        launchKernel(cublas_config, A_device, B_device, C_device_ref, M, N, K, alpha, beta, handle);
 
         // Start actual kernel timing step
         CUDA_CHECK(cudaEventRecord(start));
