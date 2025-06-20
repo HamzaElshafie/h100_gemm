@@ -93,11 +93,7 @@ double measureExecutionTime(Function function) {
  * @note This function is ideal for timing a standalone kernel launch. For benchmarking repeated kernel executions, consider running the kernel multiple times in a loop and averaging the timings for more accurate results.
  *
  * @tparam KernelFunc  Kernel function type
- * @tparam Args        Kernel argument types
  * @param kernel       Kernel function to measure
- * @param grid         Grid dimensions
- * @param block        Block dimensions
- * @param args         Kernel arguments
  * @return float       Execution time in milliseconds
  */
 template <typename KernelFunc>
