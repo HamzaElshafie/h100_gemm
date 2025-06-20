@@ -55,7 +55,7 @@
  * @param max       Maximum value for random numbers (default: 1.0)
  * @param seed       Seed for random generator, 0 means use time(0) (default: 0)
  */
-inline void initialiseArrays(float **arrays, int num_arrays, size_t size, float min = 0.0f, float max = 1.0f, unsigned int seed = 0) {
+inline void initialiseArrays(float** arrays, int num_arrays, size_t size, float min = 0.0f, float max = 1.0f, unsigned int seed = 0) {
     // Set random seed
     if (seed == 0) {
         seed = static_cast<unsigned int>(time(0)); // get current time
@@ -169,10 +169,10 @@ inline bool compareResults(const float *ref_output, const float *test_output, si
 class ResourceManager {
 
 private:
-    std::vector<float *> host_ptrs;
-    std::vector<float *> device_ptrs;
+    std::vector<float*> host_ptrs;
+    std::vector<float*> device_ptrs;
     std::vector<cudaEvent_t> events;
-    cublasHandle_t *cublas_handle;
+    cublasHandle_t* cublas_handle;
 
 public:
     ResourceManager() : cublas_handle(nullptr) {}
@@ -181,7 +181,7 @@ public:
      * @brief Add a host memory pointer to be managed
      * @param ptr Pointer to host memory
      */
-    void add_host_ptr(float *ptr) {
+    void add_host_ptr(float* ptr) {
         if (ptr) {
             host_ptrs.push_back(ptr);
         }
@@ -191,7 +191,7 @@ public:
      * @brief Add a device memory pointer to be managed
      * @param ptr Pointer to device memory
      */
-    void add_device_ptr(float *ptr) {
+    void add_device_ptr(float* ptr) {
         if (ptr) {
             device_ptrs.push_back(ptr);
         }
@@ -209,7 +209,7 @@ public:
      * @brief Set the cuBLAS handle to be managed
      * @param handle Pointer to cuBLAS handle
      */
-    void set_cublas_handle(cublasHandle_t *handle) {
+    void set_cublas_handle(cublasHandle_t* handle) {
         cublas_handle = handle;
     }
 
