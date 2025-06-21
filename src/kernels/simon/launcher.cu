@@ -11,7 +11,7 @@
 #include <cmath>
 
 #include "utils.h"
-#include "kernel01_naive.cuh"
+#include "simon_naive.cuh"
 
 namespace simon {
     /**
