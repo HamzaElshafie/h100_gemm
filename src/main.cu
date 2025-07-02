@@ -32,7 +32,7 @@ void printUsage() {
  */
 KernelConfig parseKernelConfig(const std::string& impl, int kernel_id) {
     if (impl == "simon") { // Check kernel validity
-        if (kernel_id > 1 || kernel_id < 0) { // (TODO: Update later)
+        if (kernel_id > 2 || kernel_id < 0) { // (TODO: Update later)
             throw std::invalid_argument("Invalid Simon kernel ID");
         }
         return KernelConfig(KernelType::SIMON, kernel_id);
@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
     
     // Define matrices sizes to test
     std::vector<int> sizes = {128, 256, 512, 1024, 2048, 4096};
-    float alpha = 0.5f;
+    float alpha = 5.0f;
     float beta = 3.0f;
 
     // Calculate memory size required (Allocate for largest size and reuse for smaller matrices)
