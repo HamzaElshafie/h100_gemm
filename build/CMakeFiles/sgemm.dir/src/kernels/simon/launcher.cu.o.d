@@ -251,4 +251,5 @@ CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.o : /workspace/h100_sgemm/src
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/stl_vector.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/stl_bvector.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/vector.tcc \
-    /workspace/h100_sgemm/src/kernels/simon/kernel01_naive.cuh
+    /workspace/h100_sgemm/src/kernels/simon/simon_naive.cuh \
+    /workspace/h100_sgemm/src/kernels/simon/simon_coalesced.cuh

@@ -254,7 +254,8 @@ CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.o: ../src/kernels/simon/launc
   /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/stl_vector.h \
   /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/stl_bvector.h \
   /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/vector.tcc \
-  ../src/kernels/simon/kernel01_naive.cuh
+  ../src/kernels/simon/simon_naive.cuh \
+  ../src/kernels/simon/simon_coalesced.cuh
 
 CMakeFiles/sgemm.dir/src/main.cu.o: ../src/main.cu \
   /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/stdc-predef.h \
@@ -759,6 +760,8 @@ CMakeFiles/sgemm.dir/src/runner.cu.o: ../src/runner.cu \
   ../src/kernels/simon/launcher.cuh
 
 
+../src/kernels/simon/launcher.cuh:
+
 /usr/local/cuda/targets/x86_64-linux/include/cuda_bf16.h:
 
 /usr/local/cuda/targets/x86_64-linux/include/crt/device_double_functions.h:
@@ -814,6 +817,8 @@ CMakeFiles/sgemm.dir/src/runner.cu.o: ../src/runner.cu \
 /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/cctype:
 
 /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/tr1/poly_hermite.tcc:
+
+../src/kernels/simon/simon_coalesced.cuh:
 
 /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/huge_vall.h:
 
@@ -898,6 +903,8 @@ CMakeFiles/sgemm.dir/src/runner.cu.o: ../src/runner.cu \
 /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/stdlib-float.h:
 
 /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/basic_string.tcc:
+
+../src/kernels/simon/simon_naive.cuh:
 
 /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/_G_config.h:
 
@@ -1129,8 +1136,6 @@ CMakeFiles/sgemm.dir/src/runner.cu.o: ../src/runner.cu \
 
 /usr/local/cuda/targets/x86_64-linux/include/device_launch_parameters.h:
 
-../src/kernels/simon/kernel01_naive.cuh:
-
 /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/stl_pair.h:
 
 /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/initializer_list:
@@ -1272,5 +1277,3 @@ CMakeFiles/sgemm.dir/src/runner.cu.o: ../src/runner.cu \
 /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/ctime:
 
 /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/vector.tcc:
-
-../src/kernels/simon/launcher.cuh:
