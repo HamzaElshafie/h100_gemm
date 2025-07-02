@@ -7,6 +7,9 @@
 namespace simon {
     void run_sgemm_naive(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C, 
         int M, int N, int K, float alpha, float beta);
+
+    void run_sgemm_coalesced(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
+    int M, int N, int K, float alpha, float beta);
 }
 
 namespace cublas {

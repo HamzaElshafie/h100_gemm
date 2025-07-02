@@ -24,7 +24,8 @@ enum class KernelType {
  * @brief Simon kernel variants.
  */
 enum class SimonKernelVariant {
-    naive_sgemm = 0
+    naive_sgemm = 0,
+    coalesced_sgemm = 1
 };
 
 /**

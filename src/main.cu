@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
     KernelConfig config = parseKernelConfig(impl, kernel_id);
     
     // Define matrices sizes to test
-    std::vector<int> sizes = {128, 256, 512, 1024, 2048};
+    std::vector<int> sizes = {128, 256, 512, 1024, 2048, 4096};
     float alpha = 0.5f;
     float beta = 3.0f;
 

@@ -12,6 +12,7 @@
 
 #include "utils.h"
 #include "simon_naive.cuh"
+#include "simon_coalesced.cuh"
 
 namespace simon {
     /**
@@ -32,6 +33,15 @@ namespace simon {
             dim3 gridDim(CEIL_DIV(K, 32), CEIL_DIV(M, 32));
             dim3 blockDim(32, 32);
             sgemm_naive<<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
+            CUDA_CHECK(cudaGetLastError());
+            CUDA_CHECK(cudaDeviceSynchronize());
+        }
+
+    void run_sgemm_coalesced(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
+        int M, int N, int K, float alpha, float beta) {
+            dim3 gridDim(CEIL_DIV(K, 32), CEIL_DIV(M, 32));
+            dim3 blockDim(32*32);
+            sgemm_coalesced<32><<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
             CUDA_CHECK(cudaGetLastError());
             CUDA_CHECK(cudaDeviceSynchronize());
         }

@@ -38,12 +38,15 @@ void launchKernel(const KernelConfig& config, const float* __restrict__ A, const
                     case SimonKernelVariant::naive_sgemm:
                         simon::run_sgemm_naive(A, B, C, M, N, K, alpha, beta);
                         break;
+                    case SimonKernelVariant::coalesced_sgemm:
+                        simon::run_sgemm_coalesced(A, B, C, M, N, K, alpha, beta);
+                        break;
                     default:
                         throw std::invalid_argument("Unknown Simon kernel ID");
                 }
             break;
             case KernelType::CUBLAS:
-                // Only one reference so need for switch here
+                // Only one reference so no need for switch here
                 cublas::run_sgemm_cublas(A, B, C, M, N, K, alpha, beta, handle);
                 break;
             // Hopper TODO
