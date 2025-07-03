@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
     KernelConfig config = parseKernelConfig(impl, kernel_id);
     
     // Define matrices sizes to test
-    std::vector<int> sizes = {128, 256, 512, 1024, 2048, 4096};
+    std::vector<int> sizes = {128, 256, 512, 1024, 2048, 4096, 8192};
     float alpha = 5.0f;
     float beta = 3.0f;
 
@@ -174,12 +174,30 @@ int main(int argc, char** argv) {
                 std::cout << "Results match!" << std::endl;
             }
         }
+
+        // Calculate total FLOPs for SGEMM: (2*M*N*K + 3*M*N) for alpha*(AB) + beta*C
+        double flops_per_run = 2.0 * static_cast<double>(M) * static_cast<double>(N) * static_cast<double>(K) +
+                              3.0 * static_cast<double>(M) * static_cast<double>(N);
         
         // Warmup cuBLAS kernel
         KernelConfig cublas_config(KernelType::CUBLAS, 0);
         launchKernel(cublas_config, A_device, B_device, C_device_ref, M, N, K, alpha, beta, handle);
 
-        // Start actual kernel timing step
+        // Start cuBLAS timing
+        CUDA_CHECK(cudaEventRecord(start));
+        // Run kernel multiple time to smooth out timing variations
+        for (int i = 0; i < repeat; i++) {
+            launchKernel(cublas_config, A_device, B_device, C_device, M, N, K, alpha, beta, handle);
+        }
+        CUDA_CHECK(cudaEventRecord(stop));
+        CUDA_CHECK(cudaEventSynchronize(stop));
+        CUDA_CHECK(cudaEventElapsedTime(&elapsed_time, start, stop));
+        
+        elapsed_time /= 1000.; 
+        double cublas_avg_time = elapsed_time / repeat;
+        double cublas_gflops = flops_per_run / (cublas_avg_time * 1e9);
+
+        // Start custom kernel timing step
         CUDA_CHECK(cudaEventRecord(start));
         // Run kernel multiple time to smooth out timing variations
         for (int i = 0; i < repeat; i++) {
@@ -190,15 +208,14 @@ int main(int argc, char** argv) {
         CUDA_CHECK(cudaEventElapsedTime(&elapsed_time, start, stop));
 
         elapsed_time /= 1000.; // Convert to seconds
-
-        // Calculate total FLOPs for SGEMM: (2*M*N*K + 3*M*N) for alpha*(AB) + beta*C
-        double flops_per_run = 2.0 * static_cast<double>(M) * static_cast<double>(N) * static_cast<double>(K) +
-                              3.0 * static_cast<double>(M) * static_cast<double>(N);
         double average_time = elapsed_time / repeat;
         // Throughput in GFLOPs/s
-        double gflops = flops_per_run / (average_time * 1e9);
+        double custom_gflops = flops_per_run / (average_time * 1e9);
+        
+        // Performance relative to cuBLAS
+        double perf_ratio = custom_gflops / cublas_gflops;
 
-        printf("Average elapsed time: %.6f s, GFLOPS: %.1f\n", average_time, gflops);
+        printf("Average elapsed time: %.6f s, GFLOPS: %.1f, Performance relative to cuBLAS: %.1f%%\n", average_time, custom_gflops, perf_ratio*100.0);
         
         // Copy result back to host
         CUDA_CHECK(cudaMemcpy(C_host, C_device, curr_mem_size, cudaMemcpyDeviceToHost));
