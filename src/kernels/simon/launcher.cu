@@ -37,6 +37,18 @@ namespace simon {
             CUDA_CHECK(cudaDeviceSynchronize());
         }
 
+    /**
+     * @brief Launches a coalesced sgemm kernel
+     * 
+     * @param A       Pointer to input matrix A, stored in row-major order
+     * @param B       Pointer to input matrix B
+     * @param C       Pointer to output matrix C
+     * @param M       Number of rows in matrix A and C
+     * @param N       Number of columns in A and rows in B (shared dimension)
+     * @param K       Number of columns in matrices B and C
+     * @param alpha   Scalar multiplier for the matrix product (A @ B)
+     * @param beta    Scalar multiplier for the existing values in matrix C
+     */
     void run_sgemm_coalesced(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
         int M, int N, int K, float alpha, float beta) {
             dim3 gridDim(CEIL_DIV(K, 32), CEIL_DIV(M, 32));
