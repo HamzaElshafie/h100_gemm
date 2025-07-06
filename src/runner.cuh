@@ -9,23 +9,24 @@
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
-#include "kernels/simon/launcher.cuh"
+#include "kernels/ampere/launcher.cuh"
 
 /**
  * @brief Types of supported kernel implementations.
  */
 enum class KernelType {
-    SIMON,
+    AMPERE,
     HOPPER,
     CUBLAS
 };
 
 /**
- * @brief Simon kernel variants.
+ * @brief Ampere kernel variants.
  */
-enum class SimonKernelVariant {
+enum class AmpereKernelVariant {
     naive_sgemm = 0,
-    coalesced_sgemm = 1
+    coalesced_sgemm = 1,
+    sgemm_tiled_shared = 2
 };
 
 /**
@@ -39,12 +40,12 @@ enum class HopperKernelVariant {
  * @brief Configuration for selecting and launching a specific kernel.
  */
 struct KernelConfig {
-    KernelType type;   /**< The type of kernel implementation (Simon, Hopper or CUBLAS) */
+    KernelType type;   /**< The type of kernel implementation (Ampere, Hopper or CUBLAS) */
     int kernel_id;     /**< The kernel variant ID */
 
     /**
      * @brief Construct a new KernelConfig object.
-     * @param t Kernel type (Simon or Hopper)
+     * @param t Kernel type (Ampere or Hopper)
      * @param id Kernel variant ID
      */
     KernelConfig(KernelType t, int id) : type(t), kernel_id(id) {}

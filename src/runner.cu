@@ -11,7 +11,7 @@
 #include <stdexcept>
 
 #include "runner.cuh"
-#include "kernels/simon/launcher.cuh"
+#include "kernels/ampere/launcher.cuh"
 
 /**
  * @brief Launches the selected kernel based on the provided configuration.
@@ -33,16 +33,19 @@
 void launchKernel(const KernelConfig& config, const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C, 
     int M, int N, int K, float alpha, float beta, cublasHandle_t handle) {
         switch(config.type) {
-            case KernelType::SIMON:
-                switch (static_cast<SimonKernelVariant>(config.kernel_id)) {
-                    case SimonKernelVariant::naive_sgemm:
-                        simon::run_sgemm_naive(A, B, C, M, N, K, alpha, beta);
+            case KernelType::AMPERE:
+                switch (static_cast<AmpereKernelVariant>(config.kernel_id)) {
+                    case AmpereKernelVariant::naive_sgemm:
+                        ampere::run_sgemm_naive(A, B, C, M, N, K, alpha, beta);
                         break;
-                    case SimonKernelVariant::coalesced_sgemm:
-                        simon::run_sgemm_coalesced(A, B, C, M, N, K, alpha, beta);
+                    case AmpereKernelVariant::coalesced_sgemm:
+                        ampere::run_sgemm_coalesced(A, B, C, M, N, K, alpha, beta);
+                        break;
+                    case AmpereKernelVariant::sgemm_tiled_shared:
+                        ampere::run_sgemm_tiled_shared(A, B, C, M, N, K, alpha, beta);
                         break;
                     default:
-                        throw std::invalid_argument("Unknown Simon kernel ID");
+                        throw std::invalid_argument("Unknown Ampere kernel ID");
                 }
             break;
             case KernelType::CUBLAS:

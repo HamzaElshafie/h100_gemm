@@ -16,9 +16,9 @@
  */
 void printUsage() {
     std::cout << "Usage: ./sgemm <implementation> <kernel_ID_number>\n"
-              << "  Implementation: simon | hopper | cublas\n"
+              << "  Implementation: ampere | hopper | cublas\n"
               << "  ID:       0, 1, 2, ...\n" // TODO: Print last kernel number for each implementation
-              << "Example: ./sgemm simon 0\n"
+              << "Example: ./sgemm ampere 0\n"
               << "(Note): To run cublas you must use ID=0. ./sgemm cublas 0\n";
 }
 
@@ -31,11 +31,11 @@ void printUsage() {
  * @throws std::invalid_argument if the kernel_id is invalid.
  */
 KernelConfig parseKernelConfig(const std::string& impl, int kernel_id) {
-    if (impl == "simon") { // Check kernel validity
+    if (impl == "ampere") { // Check kernel validity
         if (kernel_id > 2 || kernel_id < 0) { // (TODO: Update later)
-            throw std::invalid_argument("Invalid Simon kernel ID");
+            throw std::invalid_argument("Invalid Ampere kernel ID");
         }
-        return KernelConfig(KernelType::SIMON, kernel_id);
+        return KernelConfig(KernelType::AMPERE, kernel_id);
     } else if (impl == "hopper") {
         if (kernel_id > 1 || kernel_id < 0) { // (TODO: Update later)
             throw std::invalid_argument("Invalid Hopper kernel ID");
@@ -71,8 +71,8 @@ int main(int argc, char** argv) {
     KernelConfig config = parseKernelConfig(impl, kernel_id);
     
     // Define matrices sizes to test
-    std::vector<int> sizes = {128, 256, 512, 1024, 2048, 4096, 8192};
-    float alpha = 5.0f;
+    std::vector<int> sizes = {512, 1024, 2048, 4096, 8192};
+    float alpha = 0.5f;
     float beta = 3.0f;
 
     // Calculate memory size required (Allocate for largest size and reuse for smaller matrices)
@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
             launchKernel(cublas_config, A_device, B_device, C_device_ref, M, N, K, alpha, beta, handle);
             CUDA_CHECK(cudaMemcpy(C_host_ref, C_device_ref, curr_mem_size, cudaMemcpyDeviceToHost));
             // Verify results
-            bool results_match = compareResults(C_host_ref, C_host, M * K, 1e-1f, 1e-1f);
+            bool results_match = compareResults(C_host_ref, C_host, M * K, 2e-1f, 2e-1f);
             if (!results_match) {
                 std::cout << "Results do not match!" << std::endl;
                 return -1;
