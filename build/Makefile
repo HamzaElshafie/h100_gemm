@@ -129,29 +129,29 @@ sgemm/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/build
 .PHONY : sgemm/fast
 
-src/kernels/simon/launcher.o: src/kernels/simon/launcher.cu.o
-.PHONY : src/kernels/simon/launcher.o
+src/kernels/ampere/launcher.o: src/kernels/ampere/launcher.cu.o
+.PHONY : src/kernels/ampere/launcher.o
 
 # target to build an object file
-src/kernels/simon/launcher.cu.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.o
-.PHONY : src/kernels/simon/launcher.cu.o
+src/kernels/ampere/launcher.cu.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.o
+.PHONY : src/kernels/ampere/launcher.cu.o
 
-src/kernels/simon/launcher.i: src/kernels/simon/launcher.cu.i
-.PHONY : src/kernels/simon/launcher.i
+src/kernels/ampere/launcher.i: src/kernels/ampere/launcher.cu.i
+.PHONY : src/kernels/ampere/launcher.i
 
 # target to preprocess a source file
-src/kernels/simon/launcher.cu.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.i
-.PHONY : src/kernels/simon/launcher.cu.i
+src/kernels/ampere/launcher.cu.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.i
+.PHONY : src/kernels/ampere/launcher.cu.i
 
-src/kernels/simon/launcher.s: src/kernels/simon/launcher.cu.s
-.PHONY : src/kernels/simon/launcher.s
+src/kernels/ampere/launcher.s: src/kernels/ampere/launcher.cu.s
+.PHONY : src/kernels/ampere/launcher.s
 
 # target to generate assembly for a file
-src/kernels/simon/launcher.cu.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.s
-.PHONY : src/kernels/simon/launcher.cu.s
+src/kernels/ampere/launcher.cu.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.s
+.PHONY : src/kernels/ampere/launcher.cu.s
 
 src/main.o: src/main.cu.o
 .PHONY : src/main.o
@@ -210,9 +210,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... sgemm"
-	@echo "... src/kernels/simon/launcher.o"
-	@echo "... src/kernels/simon/launcher.i"
-	@echo "... src/kernels/simon/launcher.s"
+	@echo "... src/kernels/ampere/launcher.o"
+	@echo "... src/kernels/ampere/launcher.i"
+	@echo "... src/kernels/ampere/launcher.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"

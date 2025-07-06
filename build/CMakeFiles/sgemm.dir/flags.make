@@ -4,7 +4,7 @@
 # compile CUDA with /usr/local/cuda/bin/nvcc
 CUDA_DEFINES = 
 
-CUDA_INCLUDES = -I/workspace/h100_sgemm/src -isystem=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/include
+CUDA_INCLUDES = -I/workspace/h100_sgemm/src -isystem=/usr/local/cuda/include
 
-CUDA_FLAGS =  -O3 --generate-code=arch=compute_90,code=[compute_90,sm_90] -std=c++17
+CUDA_FLAGS =  -O3 --generate-code=arch=compute_86,code=[compute_86,sm_86] -std=c++17
 

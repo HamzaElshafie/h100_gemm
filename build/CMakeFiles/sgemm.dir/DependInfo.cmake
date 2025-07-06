@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/workspace/h100_sgemm/src/kernels/simon/launcher.cu" "CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.o" "gcc" "CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.o.d"
+  "/workspace/h100_sgemm/src/kernels/ampere/launcher.cu" "CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.o" "gcc" "CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.o.d"
   "/workspace/h100_sgemm/src/main.cu" "CMakeFiles/sgemm.dir/src/main.cu.o" "gcc" "CMakeFiles/sgemm.dir/src/main.cu.o.d"
   "/workspace/h100_sgemm/src/runner.cu" "CMakeFiles/sgemm.dir/src/runner.cu.o" "gcc" "CMakeFiles/sgemm.dir/src/runner.cu.o.d"
   )

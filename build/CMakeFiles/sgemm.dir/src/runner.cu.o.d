@@ -1,17 +1,17 @@
 CMakeFiles/sgemm.dir/src/runner.cu.o : /workspace/h100_sgemm/src/runner.cu \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/stdc-predef.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/cuda_runtime.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/crt/host_config.h \
+    /usr/local/cuda/include/cuda_runtime.h \
+    /usr/local/cuda/include/crt/host_config.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/features.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/sys/cdefs.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/wordsize.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/gnu/stubs.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/gnu/stubs-64.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/builtin_types.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/device_types.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/crt/host_defines.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/driver_types.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/vector_types.h \
+    /usr/local/cuda/include/builtin_types.h \
+    /usr/local/cuda/include/device_types.h \
+    /usr/local/cuda/include/crt/host_defines.h \
+    /usr/local/cuda/include/driver_types.h \
+    /usr/local/cuda/include/vector_types.h \
     /root/miniconda3/envs/h100sgemm_env/lib/gcc/x86_64-conda-linux-gnu/11.2.0/include-fixed/limits.h \
     /root/miniconda3/envs/h100sgemm_env/lib/gcc/x86_64-conda-linux-gnu/11.2.0/include-fixed/syslimits.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/limits.h \
@@ -22,12 +22,12 @@ CMakeFiles/sgemm.dir/src/runner.cu.o : /workspace/h100_sgemm/src/runner.cu \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/xopen_lim.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/stdio_lim.h \
     /root/miniconda3/envs/h100sgemm_env/lib/gcc/x86_64-conda-linux-gnu/11.2.0/include/stddef.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/surface_types.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/texture_types.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/library_types.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/channel_descriptor.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/cuda_runtime_api.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/cuda_device_runtime_api.h \
+    /usr/local/cuda/include/surface_types.h \
+    /usr/local/cuda/include/texture_types.h \
+    /usr/local/cuda/include/library_types.h \
+    /usr/local/cuda/include/channel_descriptor.h \
+    /usr/local/cuda/include/cuda_runtime_api.h \
+    /usr/local/cuda/include/cuda_device_runtime_api.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/stdlib.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/cstdlib \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/x86_64-conda-linux-gnu/bits/c++config.h \
@@ -55,10 +55,10 @@ CMakeFiles/sgemm.dir/src/runner.cu.o : /workspace/h100_sgemm/src/runner.cu \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/alloca.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/stdlib-float.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/std_abs.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/driver_functions.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/vector_functions.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/vector_functions.hpp \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/crt/common_functions.h \
+    /usr/local/cuda/include/driver_functions.h \
+    /usr/local/cuda/include/vector_functions.h \
+    /usr/local/cuda/include/vector_functions.hpp \
+    /usr/local/cuda/include/crt/common_functions.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/string.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/timex.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/new \
@@ -71,7 +71,7 @@ CMakeFiles/sgemm.dir/src/runner.cu.o : /workspace/h100_sgemm/src/runner.cu \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/sys_errlist.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/stdio.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/include/assert.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/crt/math_functions.h \
+    /usr/local/cuda/include/crt/math_functions.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/math.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/cmath \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/cpp_type_traits.h \
@@ -114,39 +114,39 @@ CMakeFiles/sgemm.dir/src/runner.cu.o : /workspace/h100_sgemm/src/runner.cu \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/tr1/poly_hermite.tcc \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/tr1/poly_laguerre.tcc \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/tr1/riemann_zeta.tcc \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/crt/math_functions.hpp \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/crt/device_functions.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/crt/device_functions.hpp \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/device_atomic_functions.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/device_atomic_functions.hpp \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/crt/device_double_functions.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/crt/device_double_functions.hpp \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/sm_20_atomic_functions.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/sm_20_atomic_functions.hpp \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/sm_32_atomic_functions.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/sm_32_atomic_functions.hpp \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/sm_35_atomic_functions.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/sm_60_atomic_functions.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/sm_60_atomic_functions.hpp \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/sm_20_intrinsics.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/sm_20_intrinsics.hpp \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/sm_30_intrinsics.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/sm_30_intrinsics.hpp \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/sm_32_intrinsics.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/sm_32_intrinsics.hpp \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/sm_35_intrinsics.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/sm_61_intrinsics.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/sm_61_intrinsics.hpp \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/crt/sm_70_rt.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/crt/sm_70_rt.hpp \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/crt/sm_80_rt.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/crt/sm_80_rt.hpp \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/crt/sm_90_rt.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/crt/sm_90_rt.hpp \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/texture_indirect_functions.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/surface_indirect_functions.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/crt/cudacc_ext.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/device_launch_parameters.h \
+    /usr/local/cuda/include/crt/math_functions.hpp \
+    /usr/local/cuda/include/crt/device_functions.h \
+    /usr/local/cuda/include/crt/device_functions.hpp \
+    /usr/local/cuda/include/device_atomic_functions.h \
+    /usr/local/cuda/include/device_atomic_functions.hpp \
+    /usr/local/cuda/include/crt/device_double_functions.h \
+    /usr/local/cuda/include/crt/device_double_functions.hpp \
+    /usr/local/cuda/include/sm_20_atomic_functions.h \
+    /usr/local/cuda/include/sm_20_atomic_functions.hpp \
+    /usr/local/cuda/include/sm_32_atomic_functions.h \
+    /usr/local/cuda/include/sm_32_atomic_functions.hpp \
+    /usr/local/cuda/include/sm_35_atomic_functions.h \
+    /usr/local/cuda/include/sm_60_atomic_functions.h \
+    /usr/local/cuda/include/sm_60_atomic_functions.hpp \
+    /usr/local/cuda/include/sm_20_intrinsics.h \
+    /usr/local/cuda/include/sm_20_intrinsics.hpp \
+    /usr/local/cuda/include/sm_30_intrinsics.h \
+    /usr/local/cuda/include/sm_30_intrinsics.hpp \
+    /usr/local/cuda/include/sm_32_intrinsics.h \
+    /usr/local/cuda/include/sm_32_intrinsics.hpp \
+    /usr/local/cuda/include/sm_35_intrinsics.h \
+    /usr/local/cuda/include/sm_61_intrinsics.h \
+    /usr/local/cuda/include/sm_61_intrinsics.hpp \
+    /usr/local/cuda/include/crt/sm_70_rt.h \
+    /usr/local/cuda/include/crt/sm_70_rt.hpp \
+    /usr/local/cuda/include/crt/sm_80_rt.h \
+    /usr/local/cuda/include/crt/sm_80_rt.hpp \
+    /usr/local/cuda/include/crt/sm_90_rt.h \
+    /usr/local/cuda/include/crt/sm_90_rt.hpp \
+    /usr/local/cuda/include/texture_indirect_functions.h \
+    /usr/local/cuda/include/surface_indirect_functions.h \
+    /usr/local/cuda/include/crt/cudacc_ext.h \
+    /usr/local/cuda/include/device_launch_parameters.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/utility \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/stl_relops.h \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/initializer_list \
@@ -231,15 +231,15 @@ CMakeFiles/sgemm.dir/src/runner.cu.o : /workspace/h100_sgemm/src/runner.cu \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/ostream.tcc \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/istream \
     /root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/istream.tcc \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/cublas_v2.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/cublas_api.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/cuComplex.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/cuda_fp16.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/cuda_fp16.hpp \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/nv/target \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/nv/detail/__target_macros \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/nv/detail/__preprocessor \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/cuda_bf16.h \
-    /usr/local/cuda/bin/../targets/x86_64-linux/include/cuda_bf16.hpp \
+    /usr/local/cuda/include/cublas_v2.h \
+    /usr/local/cuda/include/cublas_api.h \
+    /usr/local/cuda/include/cuComplex.h \
+    /usr/local/cuda/include/cuda_fp16.h \
+    /usr/local/cuda/include/cuda_fp16.hpp \
+    /usr/local/cuda/include/nv/target \
+    /usr/local/cuda/include/nv/detail/__target_macros \
+    /usr/local/cuda/include/nv/detail/__preprocessor \
+    /usr/local/cuda/include/cuda_bf16.h \
+    /usr/local/cuda/include/cuda_bf16.hpp \
     /workspace/h100_sgemm/src/runner.cuh \
-    /workspace/h100_sgemm/src/kernels/simon/launcher.cuh
+    /workspace/h100_sgemm/src/kernels/ampere/launcher.cuh

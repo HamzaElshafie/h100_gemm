@@ -15,10 +15,10 @@
 ########################
 
 //Path to a program.
-CMAKE_ADDR2LINE:FILEPATH=/root/miniconda3/envs/h100sgemm_env/bin/addr2line
+CMAKE_ADDR2LINE:FILEPATH=/usr/bin/addr2line
 
 //Path to a program.
-CMAKE_AR:FILEPATH=/root/miniconda3/envs/h100sgemm_env/bin/ar
+CMAKE_AR:FILEPATH=/usr/bin/ar
 
 //Choose the type of build, options are: None Debug Release RelWithDebInfo
 // MinSizeRel ...
@@ -31,7 +31,7 @@ CMAKE_COLOR_MAKEFILE:BOOL=ON
 CMAKE_CUDA_ARCHITECTURES:STRING=52
 
 //CUDA compiler
-CMAKE_CUDA_COMPILER:FILEPATH=/root/miniconda3/envs/h100sgemm_env/bin/nvcc
+CMAKE_CUDA_COMPILER:FILEPATH=/usr/local/cuda/bin/nvcc
 
 //Flags used by the CUDA compiler during all build types.
 CMAKE_CUDA_FLAGS:STRING=
@@ -49,18 +49,18 @@ CMAKE_CUDA_FLAGS_RELEASE:STRING=-O3 -DNDEBUG
 CMAKE_CUDA_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
 
 //CXX compiler
-CMAKE_CXX_COMPILER:FILEPATH=/root/miniconda3/envs/h100sgemm_env/bin/x86_64-conda-linux-gnu-c++
+CMAKE_CXX_COMPILER:FILEPATH=/usr/bin/c++
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
-CMAKE_CXX_COMPILER_AR:FILEPATH=/root/miniconda3/envs/h100sgemm_env/bin/x86_64-conda-linux-gnu-gcc-ar
+CMAKE_CXX_COMPILER_AR:FILEPATH=/usr/bin/gcc-ar-11
 
 //A wrapper around 'ranlib' adding the appropriate '--plugin' option
 // for the GCC compiler
-CMAKE_CXX_COMPILER_RANLIB:FILEPATH=/root/miniconda3/envs/h100sgemm_env/bin/x86_64-conda-linux-gnu-gcc-ranlib
+CMAKE_CXX_COMPILER_RANLIB:FILEPATH=/usr/bin/gcc-ranlib-11
 
 //Flags used by the CXX compiler during all build types.
-CMAKE_CXX_FLAGS:STRING=-fvisibility-inlines-hidden -std=c++17 -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /root/miniconda3/envs/h100sgemm_env/include  -I/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/include  -L/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib -L/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/stubs
+CMAKE_CXX_FLAGS:STRING=
 
 //Flags used by the CXX compiler during DEBUG builds.
 CMAKE_CXX_FLAGS_DEBUG:STRING=-g
@@ -78,7 +78,7 @@ CMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
 CMAKE_DLLTOOL:FILEPATH=CMAKE_DLLTOOL-NOTFOUND
 
 //Flags used by the linker during all build types.
-CMAKE_EXE_LINKER_FLAGS:STRING=-Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,-rpath,/root/miniconda3/envs/h100sgemm_env/lib -Wl,-rpath-link,/root/miniconda3/envs/h100sgemm_env/lib -L/root/miniconda3/envs/h100sgemm_env/lib  -L/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib -L/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/stubs
+CMAKE_EXE_LINKER_FLAGS:STRING=
 
 //Flags used by the linker during DEBUG builds.
 CMAKE_EXE_LINKER_FLAGS_DEBUG:STRING=
@@ -99,14 +99,14 @@ CMAKE_EXPORT_COMPILE_COMMANDS:BOOL=
 CMAKE_INSTALL_PREFIX:PATH=/usr/local
 
 //Path to a program.
-CMAKE_LINKER:FILEPATH=/root/miniconda3/envs/h100sgemm_env/bin/ld
+CMAKE_LINKER:FILEPATH=/usr/bin/ld
 
 //Path to a program.
 CMAKE_MAKE_PROGRAM:FILEPATH=/usr/bin/gmake
 
 //Flags used by the linker during the creation of modules during
 // all build types.
-CMAKE_MODULE_LINKER_FLAGS:STRING=-Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,-rpath,/root/miniconda3/envs/h100sgemm_env/lib -Wl,-rpath-link,/root/miniconda3/envs/h100sgemm_env/lib -L/root/miniconda3/envs/h100sgemm_env/lib  -L/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib -L/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/stubs
+CMAKE_MODULE_LINKER_FLAGS:STRING=
 
 //Flags used by the linker during the creation of modules during
 // DEBUG builds.
@@ -125,13 +125,13 @@ CMAKE_MODULE_LINKER_FLAGS_RELEASE:STRING=
 CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 
 //Path to a program.
-CMAKE_NM:FILEPATH=/root/miniconda3/envs/h100sgemm_env/bin/nm
+CMAKE_NM:FILEPATH=/usr/bin/nm
 
 //Path to a program.
-CMAKE_OBJCOPY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/bin/objcopy
+CMAKE_OBJCOPY:FILEPATH=/usr/bin/objcopy
 
 //Path to a program.
-CMAKE_OBJDUMP:FILEPATH=/root/miniconda3/envs/h100sgemm_env/bin/objdump
+CMAKE_OBJDUMP:FILEPATH=/usr/bin/objdump
 
 //Value Computed by CMake
 CMAKE_PROJECT_DESCRIPTION:STATIC=
@@ -143,14 +143,14 @@ CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 CMAKE_PROJECT_NAME:STATIC=h100_sgemm
 
 //Path to a program.
-CMAKE_RANLIB:FILEPATH=/root/miniconda3/envs/h100sgemm_env/bin/ranlib
+CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib
 
 //Path to a program.
-CMAKE_READELF:FILEPATH=/root/miniconda3/envs/h100sgemm_env/bin/readelf
+CMAKE_READELF:FILEPATH=/usr/bin/readelf
 
 //Flags used by the linker during the creation of shared libraries
 // during all build types.
-CMAKE_SHARED_LINKER_FLAGS:STRING=-Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,-rpath,/root/miniconda3/envs/h100sgemm_env/lib -Wl,-rpath-link,/root/miniconda3/envs/h100sgemm_env/lib -L/root/miniconda3/envs/h100sgemm_env/lib  -L/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib -L/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/stubs
+CMAKE_SHARED_LINKER_FLAGS:STRING=
 
 //Flags used by the linker during the creation of shared libraries
 // during DEBUG builds.
@@ -196,7 +196,7 @@ CMAKE_STATIC_LINKER_FLAGS_RELEASE:STRING=
 CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 
 //Path to a program.
-CMAKE_STRIP:FILEPATH=/root/miniconda3/envs/h100sgemm_env/bin/strip
+CMAKE_STRIP:FILEPATH=/usr/bin/strip
 
 //If this value is on, makefiles will be generated without the
 // .SILENT directive, and all commands will be echoed to the console
@@ -205,7 +205,7 @@ CMAKE_STRIP:FILEPATH=/root/miniconda3/envs/h100sgemm_env/bin/strip
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
 //Path to a library.
-CUDAToolkit_rt_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/lib/librt.so
+CUDAToolkit_rt_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/librt.a
 
 //Compile device code in 64 bit mode
 CUDA_64_BIT_DEVICE_CODE:BOOL=ON
@@ -221,13 +221,13 @@ CUDA_BUILD_CUBIN:BOOL=OFF
 CUDA_BUILD_EMULATION:BOOL=OFF
 
 //Path to a library.
-CUDA_CUDART:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libcudart.so
+CUDA_CUDART:FILEPATH=/usr/local/cuda/lib64/libcudart.so
 
 //"cudart" library
-CUDA_CUDART_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libcudart.so
+CUDA_CUDART_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcudart.so
 
 //"cuda" library (older versions only).
-CUDA_CUDA_LIBRARY:FILEPATH=CUDA_CUDA_LIBRARY-NOTFOUND
+CUDA_CUDA_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libcuda.so
 
 //Directory to put all the output files.  If blank it will default
 // to the CMAKE_CURRENT_BINARY_DIR
@@ -240,7 +240,7 @@ CUDA_HOST_COMPILATION_CPP:BOOL=ON
 CUDA_HOST_COMPILER:FILEPATH=
 
 //Path to a program.
-CUDA_NVCC_EXECUTABLE:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/bin/nvcc
+CUDA_NVCC_EXECUTABLE:FILEPATH=/usr/local/cuda/bin/nvcc
 
 //Semi-colon delimit multiple arguments. during all build types.
 CUDA_NVCC_FLAGS:STRING=
@@ -259,7 +259,7 @@ CUDA_NVCC_FLAGS_RELEASE:STRING=
 CUDA_NVCC_FLAGS_RELWITHDEBINFO:STRING=
 
 //"OpenCL" library
-CUDA_OpenCL_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libOpenCL.so
+CUDA_OpenCL_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libOpenCL.so
 
 //Propagate C/CXX_FLAGS and friends to the host compiler via -Xcompile
 CUDA_PROPAGATE_HOST_FLAGS:BOOL=ON
@@ -272,10 +272,10 @@ CUDA_SDK_ROOT_DIR:PATH=CUDA_SDK_ROOT_DIR-NOTFOUND
 CUDA_SEPARABLE_COMPILATION:BOOL=OFF
 
 //Path to a file.
-CUDA_TOOLKIT_INCLUDE:PATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/include
+CUDA_TOOLKIT_INCLUDE:PATH=/usr/local/cuda/include
 
 //Toolkit location.
-CUDA_TOOLKIT_ROOT_DIR:PATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux
+CUDA_TOOLKIT_ROOT_DIR:PATH=/usr/local/cuda
 
 //Use the static version of the CUDA runtime library if available
 CUDA_USE_STATIC_CUDA_RUNTIME:BOOL=ON
@@ -287,85 +287,85 @@ CUDA_USE_STATIC_CUDA_RUNTIME:BOOL=ON
 CUDA_VERBOSE_BUILD:BOOL=OFF
 
 //Version of CUDA as computed from nvcc.
-CUDA_VERSION:STRING=12.4
+CUDA_VERSION:STRING=12.1
 
 //Path to a library.
-CUDA_cublasLt_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/lib/libcublasLt.so
+CUDA_cublasLt_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcublasLt.so
 
 //Path to a library.
-CUDA_cublasLt_static_LIBRARY:FILEPATH=CUDA_cublasLt_static_LIBRARY-NOTFOUND
+CUDA_cublasLt_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcublasLt_static.a
 
 //"cublas" library
-CUDA_cublas_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libcublas.so
+CUDA_cublas_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcublas.so
 
 //Path to a library.
-CUDA_cublas_static_LIBRARY:FILEPATH=CUDA_cublas_static_LIBRARY-NOTFOUND
+CUDA_cublas_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcublas_static.a
 
 //Path to a library.
-CUDA_cuda_driver_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/lib/stubs/libcuda.so
+CUDA_cuda_driver_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libcuda.so
 
 //"cudadevrt" library
-CUDA_cudadevrt_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libcudadevrt.a
+CUDA_cudadevrt_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcudadevrt.a
 
 //Path to a library.
-CUDA_cudart_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/lib/libcudart.so
+CUDA_cudart_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcudart.so
 
 //static CUDA runtime library
-CUDA_cudart_static_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libcudart_static.a
+CUDA_cudart_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcudart_static.a
 
 //"cufft" library
-CUDA_cufft_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libcufft.so
+CUDA_cufft_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcufft.so
 
 //Path to a library.
-CUDA_cufft_static_LIBRARY:FILEPATH=CUDA_cufft_static_LIBRARY-NOTFOUND
+CUDA_cufft_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcufft_static.a
 
 //Path to a library.
-CUDA_cufftw_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/lib/libcufftw.so
+CUDA_cufftw_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcufftw.so
 
 //Path to a library.
-CUDA_culibos_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/lib/libculibos.a
+CUDA_culibos_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libculibos.a
 
 //"cupti" library
-CUDA_cupti_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/lib/libcupti.so
+CUDA_cupti_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcupti.so
 
 //Path to a library.
-CUDA_cupti_static_LIBRARY:FILEPATH=CUDA_cupti_static_LIBRARY-NOTFOUND
+CUDA_cupti_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcupti_static.a
 
 //"curand" library
-CUDA_curand_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libcurand.so
+CUDA_curand_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcurand.so
 
 //Path to a library.
-CUDA_curand_static_LIBRARY:FILEPATH=CUDA_curand_static_LIBRARY-NOTFOUND
+CUDA_curand_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcurand_static.a
 
 //"cusolver" library
-CUDA_cusolver_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libcusolver.so
+CUDA_cusolver_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcusolver.so
 
 //Path to a library.
-CUDA_cusolver_static_LIBRARY:FILEPATH=CUDA_cusolver_static_LIBRARY-NOTFOUND
+CUDA_cusolver_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcusolver_static.a
 
 //"cusparse" library
-CUDA_cusparse_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libcusparse.so
+CUDA_cusparse_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcusparse.so
 
 //Path to a library.
-CUDA_cusparse_static_LIBRARY:FILEPATH=CUDA_cusparse_static_LIBRARY-NOTFOUND
+CUDA_cusparse_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcusparse_static.a
 
 //"nppc" library
-CUDA_nppc_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libnppc.so
+CUDA_nppc_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppc.so
 
 //Path to a library.
-CUDA_nppc_static_LIBRARY:FILEPATH=CUDA_nppc_static_LIBRARY-NOTFOUND
+CUDA_nppc_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppc_static.a
 
 //"nppial" library
-CUDA_nppial_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libnppial.so
+CUDA_nppial_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppial.so
 
 //Path to a library.
-CUDA_nppial_static_LIBRARY:FILEPATH=CUDA_nppial_static_LIBRARY-NOTFOUND
+CUDA_nppial_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppial_static.a
 
 //"nppicc" library
-CUDA_nppicc_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libnppicc.so
+CUDA_nppicc_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppicc.so
 
 //Path to a library.
-CUDA_nppicc_static_LIBRARY:FILEPATH=CUDA_nppicc_static_LIBRARY-NOTFOUND
+CUDA_nppicc_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppicc_static.a
 
 //Path to a library.
 CUDA_nppicom_LIBRARY:FILEPATH=CUDA_nppicom_LIBRARY-NOTFOUND
@@ -374,55 +374,55 @@ CUDA_nppicom_LIBRARY:FILEPATH=CUDA_nppicom_LIBRARY-NOTFOUND
 CUDA_nppicom_static_LIBRARY:FILEPATH=CUDA_nppicom_static_LIBRARY-NOTFOUND
 
 //"nppidei" library
-CUDA_nppidei_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libnppidei.so
+CUDA_nppidei_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppidei.so
 
 //Path to a library.
-CUDA_nppidei_static_LIBRARY:FILEPATH=CUDA_nppidei_static_LIBRARY-NOTFOUND
+CUDA_nppidei_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppidei_static.a
 
 //"nppif" library
-CUDA_nppif_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libnppif.so
+CUDA_nppif_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppif.so
 
 //Path to a library.
-CUDA_nppif_static_LIBRARY:FILEPATH=CUDA_nppif_static_LIBRARY-NOTFOUND
+CUDA_nppif_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppif_static.a
 
 //"nppig" library
-CUDA_nppig_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libnppig.so
+CUDA_nppig_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppig.so
 
 //Path to a library.
-CUDA_nppig_static_LIBRARY:FILEPATH=CUDA_nppig_static_LIBRARY-NOTFOUND
+CUDA_nppig_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppig_static.a
 
 //"nppim" library
-CUDA_nppim_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libnppim.so
+CUDA_nppim_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppim.so
 
 //Path to a library.
-CUDA_nppim_static_LIBRARY:FILEPATH=CUDA_nppim_static_LIBRARY-NOTFOUND
+CUDA_nppim_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppim_static.a
 
 //"nppist" library
-CUDA_nppist_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libnppist.so
+CUDA_nppist_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppist.so
 
 //Path to a library.
-CUDA_nppist_static_LIBRARY:FILEPATH=CUDA_nppist_static_LIBRARY-NOTFOUND
+CUDA_nppist_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppist_static.a
 
 //"nppisu" library
-CUDA_nppisu_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libnppisu.so
+CUDA_nppisu_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppisu.so
 
 //Path to a library.
-CUDA_nppisu_static_LIBRARY:FILEPATH=CUDA_nppisu_static_LIBRARY-NOTFOUND
+CUDA_nppisu_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppisu_static.a
 
 //"nppitc" library
-CUDA_nppitc_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libnppitc.so
+CUDA_nppitc_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppitc.so
 
 //Path to a library.
-CUDA_nppitc_static_LIBRARY:FILEPATH=CUDA_nppitc_static_LIBRARY-NOTFOUND
+CUDA_nppitc_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppitc_static.a
 
 //"npps" library
-CUDA_npps_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libnpps.so
+CUDA_npps_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnpps.so
 
 //Path to a library.
-CUDA_npps_static_LIBRARY:FILEPATH=CUDA_npps_static_LIBRARY-NOTFOUND
+CUDA_npps_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnpps_static.a
 
 //"nvToolsExt" library
-CUDA_nvToolsExt_LIBRARY:FILEPATH=CUDA_nvToolsExt_LIBRARY-NOTFOUND
+CUDA_nvToolsExt_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnvToolsExt.so
 
 //Path to a library.
 CUDA_nvgraph_LIBRARY:FILEPATH=CUDA_nvgraph_LIBRARY-NOTFOUND
@@ -431,19 +431,19 @@ CUDA_nvgraph_LIBRARY:FILEPATH=CUDA_nvgraph_LIBRARY-NOTFOUND
 CUDA_nvgraph_static_LIBRARY:FILEPATH=CUDA_nvgraph_static_LIBRARY-NOTFOUND
 
 //Path to a library.
-CUDA_nvjpeg_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/lib/libnvjpeg.so
+CUDA_nvjpeg_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnvjpeg.so
 
 //Path to a library.
-CUDA_nvjpeg_static_LIBRARY:FILEPATH=CUDA_nvjpeg_static_LIBRARY-NOTFOUND
+CUDA_nvjpeg_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnvjpeg_static.a
 
 //Path to a library.
-CUDA_nvml_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/stubs/libnvidia-ml.so
+CUDA_nvml_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libnvidia-ml.so
 
 //Path to a library.
-CUDA_nvrtc_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/lib/libnvrtc.so
+CUDA_nvrtc_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnvrtc.so
 
 //Path to a library.
-CUDA_rt_LIBRARY:FILEPATH=/root/miniconda3/envs/h100sgemm_env/x86_64-conda-linux-gnu/sysroot/usr/lib/librt.so
+CUDA_rt_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/librt.a
 
 //Value Computed by CMake
 h100_sgemm_BINARY_DIR:STATIC=/workspace/h100_sgemm/build
@@ -534,11 +534,7 @@ CMAKE_GENERATOR_PLATFORM:INTERNAL=
 //Name of generator toolset.
 CMAKE_GENERATOR_TOOLSET:INTERNAL=
 //Test CMAKE_HAVE_LIBC_PTHREAD
-CMAKE_HAVE_LIBC_PTHREAD:INTERNAL=
-//Have library pthreads
-CMAKE_HAVE_PTHREADS_CREATE:INTERNAL=
-//Have library pthread
-CMAKE_HAVE_PTHREAD_CREATE:INTERNAL=1
+CMAKE_HAVE_LIBC_PTHREAD:INTERNAL=1
 //Have include pthread.h
 CMAKE_HAVE_PTHREAD_H:INTERNAL=1
 //Source directory with the top level CMakeLists.txt file for this
@@ -651,10 +647,10 @@ CUDA_SEPARABLE_COMPILATION-ADVANCED:INTERNAL=1
 CUDA_TOOLKIT_INCLUDE-ADVANCED:INTERNAL=1
 //This is the value of the last time CUDA_TOOLKIT_ROOT_DIR was
 // set successfully.
-CUDA_TOOLKIT_ROOT_DIR_INTERNAL:INTERNAL=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux
+CUDA_TOOLKIT_ROOT_DIR_INTERNAL:INTERNAL=/usr/local/cuda
 //This is the value of the last time CUDA_TOOLKIT_TARGET_DIR was
 // set successfully.
-CUDA_TOOLKIT_TARGET_DIR_INTERNAL:INTERNAL=/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux
+CUDA_TOOLKIT_TARGET_DIR_INTERNAL:INTERNAL=/usr/local/cuda
 //ADVANCED property for variable: CUDA_VERBOSE_BUILD
 CUDA_VERBOSE_BUILD-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CUDA_VERSION
@@ -768,9 +764,9 @@ CUDA_parse_cubin:INTERNAL=/usr/share/cmake-3.22/Modules/FindCUDA/parse_cubin.cma
 //Location of run_nvcc.cmake
 CUDA_run_nvcc:INTERNAL=/usr/share/cmake-3.22/Modules/FindCUDA/run_nvcc.cmake
 //Details about finding CUDA
-FIND_PACKAGE_MESSAGE_DETAILS_CUDA:INTERNAL=[/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux][/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/bin/nvcc][/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/include][/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libcudart_static.a][v12.4()]
+FIND_PACKAGE_MESSAGE_DETAILS_CUDA:INTERNAL=[/usr/local/cuda][/usr/local/cuda/bin/nvcc][/usr/local/cuda/include][/usr/local/cuda/lib64/libcudart_static.a][v12.1()]
 //Details about finding CUDAToolkit
-FIND_PACKAGE_MESSAGE_DETAILS_CUDAToolkit:INTERNAL=[/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/include][/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libcudart.so][/root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/bin][v12.4.131()]
+FIND_PACKAGE_MESSAGE_DETAILS_CUDAToolkit:INTERNAL=[/usr/local/cuda/include][/usr/local/cuda/lib64/libcudart.so][/usr/local/cuda/bin][v12.1.105()]
 //Details about finding Threads
 FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
 

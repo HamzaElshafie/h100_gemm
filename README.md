@@ -83,7 +83,7 @@ Navigate to the build directory and run the program:
 
 ```bash
 cd build
-./sgemm simon 0
+./sgemm ampere/hopper 0
 ```
 
-Replace simon and 0 with desired arguments.
+Replace ampere and 0 with desired arguments.

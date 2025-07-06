@@ -69,18 +69,18 @@ include CMakeFiles/sgemm.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/sgemm.dir/flags.make
 
-CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.o: CMakeFiles/sgemm.dir/flags.make
-CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.o: ../src/kernels/simon/launcher.cu
-CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.o: CMakeFiles/sgemm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/workspace/h100_sgemm/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CUDA object CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.o"
-	/usr/local/cuda/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.o -MF CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.o.d -x cu -dc /workspace/h100_sgemm/src/kernels/simon/launcher.cu -o CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.o
+CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.o: CMakeFiles/sgemm.dir/flags.make
+CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.o: ../src/kernels/ampere/launcher.cu
+CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.o: CMakeFiles/sgemm.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/workspace/h100_sgemm/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CUDA object CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.o"
+	/usr/local/cuda/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.o -MF CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.o.d -x cu -dc /workspace/h100_sgemm/src/kernels/ampere/launcher.cu -o CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.o
 
-CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CUDA source to CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.i"
+CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CUDA source to CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.i"
 	$(CMAKE_COMMAND) -E cmake_unimplemented_variable CMAKE_CUDA_CREATE_PREPROCESSED_SOURCE
 
-CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CUDA source to assembly CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.s"
+CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CUDA source to assembly CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.s"
 	$(CMAKE_COMMAND) -E cmake_unimplemented_variable CMAKE_CUDA_CREATE_ASSEMBLY_SOURCE
 
 CMakeFiles/sgemm.dir/src/main.cu.o: CMakeFiles/sgemm.dir/flags.make
@@ -113,19 +113,19 @@ CMakeFiles/sgemm.dir/src/runner.cu.s: cmake_force
 
 # Object files for target sgemm
 sgemm_OBJECTS = \
-"CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.o" \
+"CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.o" \
 "CMakeFiles/sgemm.dir/src/main.cu.o" \
 "CMakeFiles/sgemm.dir/src/runner.cu.o"
 
 # External object files for target sgemm
 sgemm_EXTERNAL_OBJECTS =
 
-CMakeFiles/sgemm.dir/cmake_device_link.o: CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.o
+CMakeFiles/sgemm.dir/cmake_device_link.o: CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.o
 CMakeFiles/sgemm.dir/cmake_device_link.o: CMakeFiles/sgemm.dir/src/main.cu.o
 CMakeFiles/sgemm.dir/cmake_device_link.o: CMakeFiles/sgemm.dir/src/runner.cu.o
 CMakeFiles/sgemm.dir/cmake_device_link.o: CMakeFiles/sgemm.dir/build.make
-CMakeFiles/sgemm.dir/cmake_device_link.o: /root/miniconda3/envs/h100sgemm_env/lib/libcudart.so
-CMakeFiles/sgemm.dir/cmake_device_link.o: /root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libcublas.so
+CMakeFiles/sgemm.dir/cmake_device_link.o: /usr/local/cuda/lib64/libcudart.so
+CMakeFiles/sgemm.dir/cmake_device_link.o: /usr/local/cuda/lib64/libcublas.so
 CMakeFiles/sgemm.dir/cmake_device_link.o: CMakeFiles/sgemm.dir/dlink.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/workspace/h100_sgemm/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CUDA device code CMakeFiles/sgemm.dir/cmake_device_link.o"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/sgemm.dir/dlink.txt --verbose=$(VERBOSE)
@@ -136,19 +136,19 @@ CMakeFiles/sgemm.dir/build: CMakeFiles/sgemm.dir/cmake_device_link.o
 
 # Object files for target sgemm
 sgemm_OBJECTS = \
-"CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.o" \
+"CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.o" \
 "CMakeFiles/sgemm.dir/src/main.cu.o" \
 "CMakeFiles/sgemm.dir/src/runner.cu.o"
 
 # External object files for target sgemm
 sgemm_EXTERNAL_OBJECTS =
 
-sgemm: CMakeFiles/sgemm.dir/src/kernels/simon/launcher.cu.o
+sgemm: CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.o
 sgemm: CMakeFiles/sgemm.dir/src/main.cu.o
 sgemm: CMakeFiles/sgemm.dir/src/runner.cu.o
 sgemm: CMakeFiles/sgemm.dir/build.make
-sgemm: /root/miniconda3/envs/h100sgemm_env/lib/libcudart.so
-sgemm: /root/miniconda3/envs/h100sgemm_env/targets/x86_64-linux/lib/libcublas.so
+sgemm: /usr/local/cuda/lib64/libcudart.so
+sgemm: /usr/local/cuda/lib64/libcublas.so
 sgemm: CMakeFiles/sgemm.dir/cmake_device_link.o
 sgemm: CMakeFiles/sgemm.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/workspace/h100_sgemm/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking CUDA executable sgemm"
