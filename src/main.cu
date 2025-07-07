@@ -195,7 +195,7 @@ int main(int argc, char** argv) {
         
         elapsed_time /= 1000.; 
         double cublas_avg_time = elapsed_time / repeat;
-        double cublas_gflops = flops_per_run / (cublas_avg_time * 1e9);
+        double cublas_tflops = flops_per_run / (cublas_avg_time * 1e12);
 
         // Start custom kernel timing step
         CUDA_CHECK(cudaEventRecord(start));
@@ -210,12 +210,12 @@ int main(int argc, char** argv) {
         elapsed_time /= 1000.; // Convert to seconds
         double average_time = elapsed_time / repeat;
         // Throughput in GFLOPs/s
-        double custom_gflops = flops_per_run / (average_time * 1e9);
+        double custom_tflops = flops_per_run / (average_time * 1e12);
         
         // Performance relative to cuBLAS
-        double perf_ratio = custom_gflops / cublas_gflops;
+        double perf_ratio = custom_tflops / cublas_tflops;
 
-        printf("Average elapsed time: %.6f s, GFLOPS: %.1f, Performance relative to cuBLAS: %.1f%%\n", average_time, custom_gflops, perf_ratio*100.0);
+        printf("Average elapsed time: %.6f s, TFLOPS: %.1f, cuBLAS TFLOPS: %.1f, Performance relative to cuBLAS: %.1f%%\n", average_time, custom_tflops, cublas_tflops, perf_ratio*100.0);
         
         // Copy result back to host
         CUDA_CHECK(cudaMemcpy(C_host, C_device, curr_mem_size, cudaMemcpyDeviceToHost));
