@@ -28,7 +28,7 @@ If you have an NVIDIA GPU available locally, begin with the steps below.
 ### 1. Fork & Clone the Repository
 
 ```bash
-git clone https://github.com/HamzaElshafie/h100_sgemm.git
+git clone https://github.com/HamzaElshafie/h100_gemm.git
 cd h100_sgemm
 ```
 
