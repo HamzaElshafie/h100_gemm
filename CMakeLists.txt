@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.18)
-project(h100_sgemm CUDA CXX)
+project(h100_gemm CUDA CXX)
 
 # Set CUDA architecture
-set(CMAKE_CUDA_ARCHITECTURES 86)
+set(CMAKE_CUDA_ARCHITECTURES 90)
 set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3")
 
@@ -22,16 +22,16 @@ file(GLOB_RECURSE SOURCES
 )
 
 # Create executable
-add_executable(sgemm ${SOURCES})
+add_executable(gemm ${SOURCES})
 
 # Link libraries
-target_link_libraries(sgemm PRIVATE 
+target_link_libraries(gemm PRIVATE 
     CUDA::cudart
     CUDA::cublas
 )
 
 # Set C++ standard
-set_target_properties(sgemm PROPERTIES
+set_target_properties(gemm PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON

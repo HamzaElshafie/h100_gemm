@@ -1,4 +1,4 @@
-name: h100sgemm_env
+name: h100gemm_env
 channels:
   - defaults
 dependencies:

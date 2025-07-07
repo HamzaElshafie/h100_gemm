@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /workspace/h100_sgemm
+CMAKE_SOURCE_DIR = /workspace/h100_gemm
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /workspace/h100_sgemm/build
+CMAKE_BINARY_DIR = /workspace/h100_gemm/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /workspace/h100_sgemm/build/CMakeFiles /workspace/h100_sgemm/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /workspace/h100_gemm/build/CMakeFiles /workspace/h100_gemm/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /workspace/h100_sgemm/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /workspace/h100_gemm/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -117,24 +117,24 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named sgemm
+# Target rules for targets named gemm
 
 # Build rule for target.
-sgemm: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 sgemm
-.PHONY : sgemm
+gemm: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 gemm
+.PHONY : gemm
 
 # fast build rule for target.
-sgemm/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/build
-.PHONY : sgemm/fast
+gemm/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gemm.dir/build.make CMakeFiles/gemm.dir/build
+.PHONY : gemm/fast
 
 src/kernels/ampere/launcher.o: src/kernels/ampere/launcher.cu.o
 .PHONY : src/kernels/ampere/launcher.o
 
 # target to build an object file
 src/kernels/ampere/launcher.cu.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gemm.dir/build.make CMakeFiles/gemm.dir/src/kernels/ampere/launcher.cu.o
 .PHONY : src/kernels/ampere/launcher.cu.o
 
 src/kernels/ampere/launcher.i: src/kernels/ampere/launcher.cu.i
@@ -142,7 +142,7 @@ src/kernels/ampere/launcher.i: src/kernels/ampere/launcher.cu.i
 
 # target to preprocess a source file
 src/kernels/ampere/launcher.cu.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gemm.dir/build.make CMakeFiles/gemm.dir/src/kernels/ampere/launcher.cu.i
 .PHONY : src/kernels/ampere/launcher.cu.i
 
 src/kernels/ampere/launcher.s: src/kernels/ampere/launcher.cu.s
@@ -150,7 +150,7 @@ src/kernels/ampere/launcher.s: src/kernels/ampere/launcher.cu.s
 
 # target to generate assembly for a file
 src/kernels/ampere/launcher.cu.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/src/kernels/ampere/launcher.cu.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gemm.dir/build.make CMakeFiles/gemm.dir/src/kernels/ampere/launcher.cu.s
 .PHONY : src/kernels/ampere/launcher.cu.s
 
 src/main.o: src/main.cu.o
@@ -158,7 +158,7 @@ src/main.o: src/main.cu.o
 
 # target to build an object file
 src/main.cu.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/src/main.cu.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gemm.dir/build.make CMakeFiles/gemm.dir/src/main.cu.o
 .PHONY : src/main.cu.o
 
 src/main.i: src/main.cu.i
@@ -166,7 +166,7 @@ src/main.i: src/main.cu.i
 
 # target to preprocess a source file
 src/main.cu.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/src/main.cu.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gemm.dir/build.make CMakeFiles/gemm.dir/src/main.cu.i
 .PHONY : src/main.cu.i
 
 src/main.s: src/main.cu.s
@@ -174,7 +174,7 @@ src/main.s: src/main.cu.s
 
 # target to generate assembly for a file
 src/main.cu.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/src/main.cu.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gemm.dir/build.make CMakeFiles/gemm.dir/src/main.cu.s
 .PHONY : src/main.cu.s
 
 src/runner.o: src/runner.cu.o
@@ -182,7 +182,7 @@ src/runner.o: src/runner.cu.o
 
 # target to build an object file
 src/runner.cu.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/src/runner.cu.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gemm.dir/build.make CMakeFiles/gemm.dir/src/runner.cu.o
 .PHONY : src/runner.cu.o
 
 src/runner.i: src/runner.cu.i
@@ -190,7 +190,7 @@ src/runner.i: src/runner.cu.i
 
 # target to preprocess a source file
 src/runner.cu.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/src/runner.cu.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gemm.dir/build.make CMakeFiles/gemm.dir/src/runner.cu.i
 .PHONY : src/runner.cu.i
 
 src/runner.s: src/runner.cu.s
@@ -198,7 +198,7 @@ src/runner.s: src/runner.cu.s
 
 # target to generate assembly for a file
 src/runner.cu.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sgemm.dir/build.make CMakeFiles/sgemm.dir/src/runner.cu.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/gemm.dir/build.make CMakeFiles/gemm.dir/src/runner.cu.s
 .PHONY : src/runner.cu.s
 
 # Help Target
@@ -209,7 +209,7 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... sgemm"
+	@echo "... gemm"
 	@echo "... src/kernels/ampere/launcher.o"
 	@echo "... src/kernels/ampere/launcher.i"
 	@echo "... src/kernels/ampere/launcher.s"
