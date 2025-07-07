@@ -1,6 +1,6 @@
-# H100 SGEMM (Project in progress)
+# H100 GEMM (Project in progress)
 
-A high-performance SGEMM (Single-precision General Matrix Multiply) implementation optimised for H100 GPUs.
+A high-performance GEMM (General Matrix Multiply) implementation optimised for H100 GPUs.
 
 ---
 
