@@ -209,7 +209,7 @@ int main(int argc, char** argv) {
 
         elapsed_time /= 1000.; // Convert to seconds
         double average_time = elapsed_time / repeat;
-        // Throughput in GFLOPs/s
+        // Throughput in TFLOPs/s
         double custom_tflops = flops_per_run / (average_time * 1e12);
         
         // Performance relative to cuBLAS
