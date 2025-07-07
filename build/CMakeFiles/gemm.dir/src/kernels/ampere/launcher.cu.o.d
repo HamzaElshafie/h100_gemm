@@ -241,6 +241,7 @@ CMakeFiles/gemm.dir/src/kernels/ampere/launcher.cu.o : /workspace/h100_gemm/src/
     /usr/local/cuda/bin/../targets/x86_64-linux/include/nv/detail/__preprocessor \
     /usr/local/cuda/bin/../targets/x86_64-linux/include/cuda_bf16.h \
     /usr/local/cuda/bin/../targets/x86_64-linux/include/cuda_bf16.hpp \
+    /usr/local/cuda/bin/../targets/x86_64-linux/include/cublasLt.h \
     /workspace/h100_gemm/src/utils.h \
     /root/miniconda3/envs/h100gemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/chrono \
     /root/miniconda3/envs/h100gemm_env/x86_64-conda-linux-gnu/include/c++/11.2.0/ratio \

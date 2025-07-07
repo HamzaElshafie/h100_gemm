@@ -1,23 +1,23 @@
 Performing C++ SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
 Change Dir: /workspace/h100_gemm/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_f7365/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_f7365.dir/build.make CMakeFiles/cmTC_f7365.dir/build
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_47724/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_47724.dir/build.make CMakeFiles/cmTC_47724.dir/build
 gmake[1]: Entering directory '/workspace/h100_gemm/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_f7365.dir/src.cxx.o
-/root/miniconda3/envs/h100gemm_env/bin/x86_64-conda-linux-gnu-c++ -DCMAKE_HAVE_LIBC_PTHREAD  -fvisibility-inlines-hidden -std=c++17 -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /root/miniconda3/envs/h100gemm_env/include  -I/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/include  -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib/stubs  -o CMakeFiles/cmTC_f7365.dir/src.cxx.o -c /workspace/h100_gemm/build/CMakeFiles/CMakeTmp/src.cxx
-Linking CXX executable cmTC_f7365
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f7365.dir/link.txt --verbose=1
-/root/miniconda3/envs/h100gemm_env/bin/x86_64-conda-linux-gnu-c++ -fvisibility-inlines-hidden -std=c++17 -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /root/miniconda3/envs/h100gemm_env/include  -I/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/include  -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib/stubs  -Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,-rpath,/root/miniconda3/envs/h100gemm_env/lib -Wl,-rpath-link,/root/miniconda3/envs/h100gemm_env/lib -L/root/miniconda3/envs/h100gemm_env/lib  -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib/stubs  CMakeFiles/cmTC_f7365.dir/src.cxx.o -o cmTC_f7365 
-/root/miniconda3/envs/h100gemm_env/bin/../lib/gcc/x86_64-conda-linux-gnu/11.2.0/../../../../x86_64-conda-linux-gnu/bin/ld: CMakeFiles/cmTC_f7365.dir/src.cxx.o: in function `main':
+Building CXX object CMakeFiles/cmTC_47724.dir/src.cxx.o
+/root/miniconda3/envs/h100gemm_env/bin/x86_64-conda-linux-gnu-c++ -DCMAKE_HAVE_LIBC_PTHREAD  -fvisibility-inlines-hidden -std=c++17 -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /root/miniconda3/envs/h100gemm_env/include  -I/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/include  -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib/stubs  -o CMakeFiles/cmTC_47724.dir/src.cxx.o -c /workspace/h100_gemm/build/CMakeFiles/CMakeTmp/src.cxx
+Linking CXX executable cmTC_47724
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_47724.dir/link.txt --verbose=1
+/root/miniconda3/envs/h100gemm_env/bin/x86_64-conda-linux-gnu-c++ -fvisibility-inlines-hidden -std=c++17 -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /root/miniconda3/envs/h100gemm_env/include  -I/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/include  -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib/stubs  -Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,-rpath,/root/miniconda3/envs/h100gemm_env/lib -Wl,-rpath-link,/root/miniconda3/envs/h100gemm_env/lib -L/root/miniconda3/envs/h100gemm_env/lib  -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib/stubs  CMakeFiles/cmTC_47724.dir/src.cxx.o -o cmTC_47724 
+/root/miniconda3/envs/h100gemm_env/bin/../lib/gcc/x86_64-conda-linux-gnu/11.2.0/../../../../x86_64-conda-linux-gnu/bin/ld: CMakeFiles/cmTC_47724.dir/src.cxx.o: in function `main':
 src.cxx:(.text.startup.main+0x24): undefined reference to `pthread_create'
 /root/miniconda3/envs/h100gemm_env/bin/../lib/gcc/x86_64-conda-linux-gnu/11.2.0/../../../../x86_64-conda-linux-gnu/bin/ld: src.cxx:(.text.startup.main+0x2e): undefined reference to `pthread_detach'
 /root/miniconda3/envs/h100gemm_env/bin/../lib/gcc/x86_64-conda-linux-gnu/11.2.0/../../../../x86_64-conda-linux-gnu/bin/ld: src.cxx:(.text.startup.main+0x38): undefined reference to `pthread_cancel'
 /root/miniconda3/envs/h100gemm_env/bin/../lib/gcc/x86_64-conda-linux-gnu/11.2.0/../../../../x86_64-conda-linux-gnu/bin/ld: src.cxx:(.text.startup.main+0x44): undefined reference to `pthread_join'
 /root/miniconda3/envs/h100gemm_env/bin/../lib/gcc/x86_64-conda-linux-gnu/11.2.0/../../../../x86_64-conda-linux-gnu/bin/ld: src.cxx:(.text.startup.main+0x50): undefined reference to `pthread_atfork'
 collect2: error: ld returned 1 exit status
-gmake[1]: *** [CMakeFiles/cmTC_f7365.dir/build.make:99: cmTC_f7365] Error 1
+gmake[1]: *** [CMakeFiles/cmTC_47724.dir/build.make:99: cmTC_47724] Error 1
 gmake[1]: Leaving directory '/workspace/h100_gemm/build/CMakeFiles/CMakeTmp'
-gmake: *** [Makefile:127: cmTC_f7365/fast] Error 2
+gmake: *** [Makefile:127: cmTC_47724/fast] Error 2
 
 
 Source file was:
@@ -44,18 +44,18 @@ int main(void)
 Determining if the function pthread_create exists in the pthreads failed with the following output:
 Change Dir: /workspace/h100_gemm/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_7a133/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_7a133.dir/build.make CMakeFiles/cmTC_7a133.dir/build
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_fb786/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_fb786.dir/build.make CMakeFiles/cmTC_fb786.dir/build
 gmake[1]: Entering directory '/workspace/h100_gemm/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_7a133.dir/CheckFunctionExists.cxx.o
-/root/miniconda3/envs/h100gemm_env/bin/x86_64-conda-linux-gnu-c++   -fvisibility-inlines-hidden -std=c++17 -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /root/miniconda3/envs/h100gemm_env/include  -I/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/include  -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib/stubs -DCHECK_FUNCTION_EXISTS=pthread_create -o CMakeFiles/cmTC_7a133.dir/CheckFunctionExists.cxx.o -c /workspace/h100_gemm/build/CMakeFiles/CheckLibraryExists/CheckFunctionExists.cxx
-Linking CXX executable cmTC_7a133
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7a133.dir/link.txt --verbose=1
-/root/miniconda3/envs/h100gemm_env/bin/x86_64-conda-linux-gnu-c++ -fvisibility-inlines-hidden -std=c++17 -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /root/miniconda3/envs/h100gemm_env/include  -I/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/include  -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib/stubs -DCHECK_FUNCTION_EXISTS=pthread_create -Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,-rpath,/root/miniconda3/envs/h100gemm_env/lib -Wl,-rpath-link,/root/miniconda3/envs/h100gemm_env/lib -L/root/miniconda3/envs/h100gemm_env/lib  -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib/stubs  CMakeFiles/cmTC_7a133.dir/CheckFunctionExists.cxx.o -o cmTC_7a133  -lpthreads 
+Building CXX object CMakeFiles/cmTC_fb786.dir/CheckFunctionExists.cxx.o
+/root/miniconda3/envs/h100gemm_env/bin/x86_64-conda-linux-gnu-c++   -fvisibility-inlines-hidden -std=c++17 -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /root/miniconda3/envs/h100gemm_env/include  -I/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/include  -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib/stubs -DCHECK_FUNCTION_EXISTS=pthread_create -o CMakeFiles/cmTC_fb786.dir/CheckFunctionExists.cxx.o -c /workspace/h100_gemm/build/CMakeFiles/CheckLibraryExists/CheckFunctionExists.cxx
+Linking CXX executable cmTC_fb786
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fb786.dir/link.txt --verbose=1
+/root/miniconda3/envs/h100gemm_env/bin/x86_64-conda-linux-gnu-c++ -fvisibility-inlines-hidden -std=c++17 -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /root/miniconda3/envs/h100gemm_env/include  -I/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/include  -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib/stubs -DCHECK_FUNCTION_EXISTS=pthread_create -Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,-rpath,/root/miniconda3/envs/h100gemm_env/lib -Wl,-rpath-link,/root/miniconda3/envs/h100gemm_env/lib -L/root/miniconda3/envs/h100gemm_env/lib  -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib -L/root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib/stubs  CMakeFiles/cmTC_fb786.dir/CheckFunctionExists.cxx.o -o cmTC_fb786  -lpthreads 
 /root/miniconda3/envs/h100gemm_env/bin/../lib/gcc/x86_64-conda-linux-gnu/11.2.0/../../../../x86_64-conda-linux-gnu/bin/ld: cannot find -lpthreads: No such file or directory
 collect2: error: ld returned 1 exit status
-gmake[1]: *** [CMakeFiles/cmTC_7a133.dir/build.make:99: cmTC_7a133] Error 1
+gmake[1]: *** [CMakeFiles/cmTC_fb786.dir/build.make:99: cmTC_fb786] Error 1
 gmake[1]: Leaving directory '/workspace/h100_gemm/build/CMakeFiles/CMakeTmp'
-gmake: *** [Makefile:127: cmTC_7a133/fast] Error 2
+gmake: *** [Makefile:127: cmTC_fb786/fast] Error 2
 
 
 

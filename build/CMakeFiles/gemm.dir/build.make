@@ -126,6 +126,7 @@ CMakeFiles/gemm.dir/cmake_device_link.o: CMakeFiles/gemm.dir/src/runner.cu.o
 CMakeFiles/gemm.dir/cmake_device_link.o: CMakeFiles/gemm.dir/build.make
 CMakeFiles/gemm.dir/cmake_device_link.o: /root/miniconda3/envs/h100gemm_env/lib/libcudart.so
 CMakeFiles/gemm.dir/cmake_device_link.o: /root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib/libcublas.so
+CMakeFiles/gemm.dir/cmake_device_link.o: /root/miniconda3/envs/h100gemm_env/lib/libcublasLt.so
 CMakeFiles/gemm.dir/cmake_device_link.o: CMakeFiles/gemm.dir/dlink.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/workspace/h100_gemm/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CUDA device code CMakeFiles/gemm.dir/cmake_device_link.o"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/gemm.dir/dlink.txt --verbose=$(VERBOSE)
@@ -149,6 +150,7 @@ gemm: CMakeFiles/gemm.dir/src/runner.cu.o
 gemm: CMakeFiles/gemm.dir/build.make
 gemm: /root/miniconda3/envs/h100gemm_env/lib/libcudart.so
 gemm: /root/miniconda3/envs/h100gemm_env/targets/x86_64-linux/lib/libcublas.so
+gemm: /root/miniconda3/envs/h100gemm_env/lib/libcublasLt.so
 gemm: CMakeFiles/gemm.dir/cmake_device_link.o
 gemm: CMakeFiles/gemm.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/workspace/h100_gemm/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking CUDA executable gemm"
