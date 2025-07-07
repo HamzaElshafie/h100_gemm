@@ -179,6 +179,12 @@ int main(int argc, char** argv) {
         double flops_per_run = 2.0 * static_cast<double>(M) * static_cast<double>(N) * static_cast<double>(K) +
                               3.0 * static_cast<double>(M) * static_cast<double>(N);
         
+        // Calculate total memory bytes transferred (read A, B, C, write C)
+        double bytes_per_run = (M * K + K * N + 2 * M * N) * sizeof(float);  // 2*M*N accounts for reading and writing C
+        
+        // Calculate arithmetic intensity (FLOPs/byte)
+        double arithmetic_intensity = flops_per_run / bytes_per_run;
+
         // Warmup cuBLAS kernel
         KernelConfig cublas_config(KernelType::CUBLAS, 0);
         launchKernel(cublas_config, A_device, B_device, C_device_ref, M, N, K, alpha, beta, handle);
@@ -215,7 +221,8 @@ int main(int argc, char** argv) {
         // Performance relative to cuBLAS
         double perf_ratio = custom_tflops / cublas_tflops;
 
-        printf("Average elapsed time: %.6f s, TFLOPS: %.1f, cuBLAS TFLOPS: %.1f, Performance relative to cuBLAS: %.1f%%\n", average_time, custom_tflops, cublas_tflops, perf_ratio*100.0);
+        printf("Average elapsed time: %.6f s, TFLOPS: %.1f, cuBLAS TFLOPS: %.1f, Performance relative to cuBLAS: %.1f%%, AI: %.1f FLOPs/byte\n", 
+               average_time, custom_tflops, cublas_tflops, perf_ratio*100.0, arithmetic_intensity);
         
         // Copy result back to host
         CUDA_CHECK(cudaMemcpy(C_host, C_device, curr_mem_size, cudaMemcpyDeviceToHost));
