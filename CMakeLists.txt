@@ -28,6 +28,7 @@ add_executable(gemm ${SOURCES})
 target_link_libraries(gemm PRIVATE 
     CUDA::cudart
     CUDA::cublas
+    CUDA::cublasLt
 )
 
 # Set C++ standard

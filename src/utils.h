@@ -15,6 +15,7 @@
 #include <ctime>
 #include <cmath>
 #include <cuda_runtime.h>
+#include <cublas_v2.h>
 #include <vector>
 
 /**
@@ -31,6 +32,24 @@
                       << cudaGetErrorString(error) << " (" << error << ") " << std::endl; \
             exit(EXIT_FAILURE);                                                           \
         }                                                                                 \
+    } while (0)
+
+/**
+ * @brief cuBLAS error checking macro
+ *
+ * Evaluates a cuBLAS call and checks for errors.
+ * If an error is detected, prints detailed information and terminates the program.
+ */
+#define CUBLAS_CHECK(call)                                                 \
+    do                                                                     \
+    {                                                                      \
+        cublasStatus_t status = call;                                      \
+        if (status != CUBLAS_STATUS_SUCCESS)                               \
+        {                                                                  \
+            std::cerr << "cuBLAS error at " << __FILE__ << ":" << __LINE__ \
+                      << " code " << status << std::endl;                  \
+            exit(EXIT_FAILURE);                                            \
+        }                                                                  \
     } while (0)
 
 /**

@@ -22,7 +22,7 @@ HEADERS   := $(shell find src -name '*.cuh' -o -name '*.h')
 OBJECTS   := $(SOURCES:src/%.cu=$(BUILDDIR)/%.o)
 
 # Libraries
-LIBRARIES := -L$(CUDA_PATH)/lib64 -lcudart -lcublas
+LIBRARIES := -L$(CUDA_PATH)/lib64 -lcudart -lcublas -lcublasLt
 
 # Binary
 TARGET    := sgemm

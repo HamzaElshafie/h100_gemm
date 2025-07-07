@@ -19,7 +19,7 @@ void printUsage() {
               << "  Implementation: ampere | hopper | cublas\n"
               << "  ID:       0, 1, 2, ...\n" // TODO: Print last kernel number for each implementation
               << "Example: ./gemm ampere 0\n"
-              << "(Note): To run cublas you must use ID=0. ./gemm cublas 0\n";
+              << "(Note): For cuBLAS, use ID=0 for cuBLASLt implementation. ./gemm cublas 0\n";
 }
 
 /**
@@ -43,7 +43,7 @@ KernelConfig parseKernelConfig(const std::string& impl, int kernel_id) {
         return KernelConfig(KernelType::HOPPER, kernel_id);
     } else if (impl == "cublas") {
         if (kernel_id != 0) {
-            throw std::invalid_argument("Invalid cuBLAS kernel ID"); // Only 0
+            throw std::invalid_argument("Invalid cuBLAS kernel ID (only ID=0 supported)");
         }
         return KernelConfig(KernelType::CUBLAS, kernel_id);
     } else {
