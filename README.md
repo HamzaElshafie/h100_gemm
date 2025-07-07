@@ -100,9 +100,6 @@ Replace ampere and 0 with desired arguments.
 To analyse performance metrics like arithmetic intensity and memory transfers:
 
 ```bash
-# Make sure you're in the project root directory
-cd /path/to/h100_gemm
-
 # Run the profiling script
 ./scripts/profile_with_ai.sh ampere 0
 ```
