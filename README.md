@@ -34,12 +34,6 @@ cd h100_gemm
 
 ### 2. Install Prerequisites
 
-#### CUDA Tools
-For profiling capabilities (arithmetic intensity, memory analysis), install Nsight Compute:
-```bash
-apt install nsight-compute-2025.2.1
-```
-
 #### Install Miniconda 
 [Official installation instructions](https://www.anaconda.com/docs/getting-started/miniconda/install)
 
@@ -91,19 +85,8 @@ Navigate to the build directory and run the program:
 
 ```bash
 cd build
-./gemm ampere/hopper 0
+./gemm ampere 0
 ```
 
-Replace ampere and 0 with desired arguments.
+replace `ampere` with your implementation (`ampere`/`hopper`/`cublas`) and `0` with your desired kernel ID.
 
-### 6. Profiling with Nsight Compute
-To analyse performance metrics like arithmetic intensity and memory transfers:
-
-```bash
-# Run the profiling script
-./scripts/profile_with_ai.sh ampere 0
-```
-
-Again replace `ampere` with your implementation (`ampere`/`hopper`/`cublas`) and `0` with your desired kernel ID.
-
-The script will automatically test different matrix sizes (512, 1024, 2048, 4096, 8192) and provide comprehensive performance analysis for each.
