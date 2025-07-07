@@ -17,6 +17,6 @@ namespace ampere {
 }
 
 namespace cublas {
-    void run_sgemm_cublasLt(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
+    void run_sgemm_cublas(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
                             int M, int N, int K, float alpha, float beta, cublasHandle_t handle);
 }

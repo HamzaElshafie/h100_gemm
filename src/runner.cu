@@ -50,7 +50,7 @@ void launchKernel(const KernelConfig& config, const float* __restrict__ A, const
             break;
             case KernelType::CUBLAS:
                 // Only one reference so no need for switch here
-                cublas::run_sgemm_cublasLt(A, B, C, M, N, K, alpha, beta, handle);
+                cublas::run_sgemm_cublas(A, B, C, M, N, K, alpha, beta, handle);
                 break;
             // Hopper TODO
             default:
