@@ -5,6 +5,25 @@
 #include <cuda_runtime.h>
 #include <cmath>
 
+/**
+ * @brief Tiled Shared Memory SGEMM (Single-Precision General Matrix Multiply) kernel.
+ *
+ * Computes the matrix multiplication C = alpha * (A @ B) + beta * C,
+ * where A is of size (MxN), B is of size (NxK), and C is of size (MxK).
+ * This implementation uses tiled shared memory for improved performance,
+ * where each thread block computes a tile of the output matrix C, allowing
+ * for efficient data reuse and reduced global memory accesses.
+ *
+ * @tparam TILE_SIZE Size of the tiles used in the computation
+ * @param A       Pointer to input matrix A, stored in row-major order
+ * @param B       Pointer to input matrix B
+ * @param C       Pointer to output matrix C
+ * @param M       Number of rows in matrix A and C
+ * @param N       Number of columns in A and rows in B (shared dimension)
+ * @param K       Number of columns in matrices B and C
+ * @param alpha   Scalar multiplier for the matrix product (A @ B)
+ * @param beta    Scalar multiplier for the existing values in matrix C
+ */
 template <const uint TILE_SIZE>
 __global__ void sgemm_tiled_shared(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
     int M, int N, int K, float alpha, float beta) {

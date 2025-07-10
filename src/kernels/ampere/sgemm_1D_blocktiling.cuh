@@ -5,6 +5,27 @@
 #include <cuda_runtime.h>
 #include <cmath>
 
+/**
+ * @brief 1D Blocktiling SGEMM (Single-Precision General Matrix Multiply) kernel.
+ *
+ * Computes the matrix multiplication C = alpha * (A @ B) + beta * C,
+ * where A is of size (MxN), B is of size (NxK), and C is of size (MxK).
+ * This implementation uses 1D block tiling for improved performance where each
+ * thread is responsible for computing multiple output elements.
+ *
+ * @tparam TILE_SIZE_M Number of rows in each tile of matrix A
+ * @tparam TILE_SIZE_N Number of columns in each tile of matrix A and rows in each tile of matrix B
+ * @tparam TILE_SIZE_K Number of columns in each tile of matrix B
+ * @tparam ROWS_PER_THREAD Number of rows each thread computes
+ * @param A       Pointer to input matrix A, stored in row-major order
+ * @param B       Pointer to input matrix B
+ * @param C       Pointer to output matrix C
+ * @param M       Number of rows in matrix A and C
+ * @param N       Number of columns in A and rows in B (shared dimension)
+ * @param K       Number of columns in matrices B and C
+ * @param alpha   Scalar multiplier for the matrix product (A @ B)
+ * @param beta    Scalar multiplier for the existing values in matrix C
+ */
 template <const uint TILE_SIZE_M, const uint TILE_SIZE_N, const uint TILE_SIZE_K,  const uint ROWS_PER_THREAD>
 __global__ void sgemm_1D_blocktiling(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
     int M, int N, int K, float alpha, float beta) {
