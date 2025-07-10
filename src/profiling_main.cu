@@ -2,59 +2,83 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
+#include <cmath>
 
 #include "utils.h"
-#include "runner.cuh"
 
-/**
- * @brief Parses the kernel configuration from CLI arguments.
- */
-KernelConfig parseKernelConfig(const std::string& impl, int kernel_id) {
-    if (impl == "ampere") {
-        if (kernel_id > 3 || kernel_id < 0) {
-            throw std::invalid_argument("Invalid Ampere kernel ID");
+
+template <const uint TILE_SIZE>
+__global__ void sgemm_tiled_shared(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
+    int M, int N, int K, float alpha, float beta) {
+        // Allocate shared memory
+        __shared__ float sharedA[TILE_SIZE * TILE_SIZE];
+        __shared__ float sharedB[TILE_SIZE * TILE_SIZE];
+
+        // Identify the tile of C this thread block is responsible for (We assume tiles are same size as block)
+        const uint block_row = blockIdx.y;
+        const uint block_column = blockIdx.x;
+
+        // Calculate position of thread within tile (Remapping from 1-D to 2-D)
+        const uint ty = threadIdx.x / TILE_SIZE; // (0, TILE_SIZE-1)
+        const uint tx = threadIdx.x % TILE_SIZE; // (0, TILE_SIZE-1)
+
+        // Move pointers from A[0], B[0] and C[0] to the starting positions of the tile
+        A += block_row * TILE_SIZE * N; // Move pointer (block_row * TILE_SIZE) rows down
+        B += block_column * TILE_SIZE; // Move pointer (block_column * TILE_SIZE) columns to the right 
+        C += (block_row * TILE_SIZE * K) + (block_column * TILE_SIZE); // Move pointer (block_row * TILE_SIZE * K) rows down then (block_column * TILE_SIZE) columns to the right
+
+        // Calculate how many tiles we have
+        const uint num_tiles = (K + TILE_SIZE - 1) / TILE_SIZE;
+        float cumulative_sum = 0.0f;
+
+        // Iterate over tiles (Phase 1: Loading data)
+        for (int t = 0; t < num_tiles; t++) {
+            sharedA[ty * TILE_SIZE + tx] = A[ty * N + tx];
+            sharedB[ty * TILE_SIZE + tx] = B[ty * K + tx];
+
+            // Barrier synchronisation until all threads load smem tiles
+            __syncthreads();
+
+            // Phase 2: Compute partial results iteratively
+            for (int i = 0; i < TILE_SIZE; i++) {
+                cumulative_sum += sharedA[ty * TILE_SIZE + i] * sharedB[i * TILE_SIZE + tx];
+            }
+
+            // Barrier synchronisation until all threads finish writing to smem
+            __syncthreads();
+
+            // Move all pointers to the starting positions of the next tile
+            A += TILE_SIZE; // Move right
+            B += TILE_SIZE * K; // Move down
         }
-        return KernelConfig(KernelType::AMPERE, kernel_id);
-    } else if (impl == "hopper") {
-        if (kernel_id > 1 || kernel_id < 0) {
-            throw std::invalid_argument("Invalid Hopper kernel ID");
-        }
-        return KernelConfig(KernelType::HOPPER, kernel_id);
-    } else if (impl == "cublas") {
-        if (kernel_id != 0) {
-            throw std::invalid_argument("Invalid cuBLAS kernel ID (only ID=0 supported)");
-        }
-        return KernelConfig(KernelType::CUBLAS, kernel_id);
-    } else {
-        throw std::invalid_argument("Invalid implementation name: " + impl);
+        // Write results back to C
+        C[ty * K + tx] = (alpha * cumulative_sum) + (beta * C[ty * K + tx]);
     }
+
+void launch_sgemm_tiled_shared(const float* A, const float* B, float* C, int M, int N, int K, float alpha, float beta) {
+    const int TILE_SIZE = 32;
+    dim3 gridDim(CEIL_DIV(K, TILE_SIZE), CEIL_DIV(M, TILE_SIZE));
+    dim3 blockDim(TILE_SIZE * TILE_SIZE); // 1024 threads per block
+    
+    sgemm_tiled_shared<TILE_SIZE><<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
 }
 
 /**
  * @brief Main entry point for the profiling program.
- *
- * @param argc Number of CLI arguments.
- * @param argv Array of CLI strings.
- * @return int Exit status code.
  */
 int main(int argc, char** argv) {
     ResourceManager resources;
 
-    if (argc != 3) {
-        std::cout << "Usage: ./profiling_main <implementation> <kernel_ID_number>\n";
-        return -1;
-    }
-    
-    std::string impl = argv[1];
-    int kernel_id = std::stoi(argv[2]);
-    KernelConfig config = parseKernelConfig(impl, kernel_id);
-    
     // Fixed size for profiling
     const int size = 8192;
     const float alpha = 0.5f;
     const float beta = 3.0f;
     
     const size_t mem_size = size * size * sizeof(float);
+
+    std::cout << "Profiling sgemm_tiled_shared kernel with matrix size " << size << "x" << size << std::endl;
 
     // Allocate host memory
     float* A_host = (float*)malloc(mem_size);
@@ -93,25 +117,18 @@ int main(int argc, char** argv) {
     CUDA_CHECK(cudaMemcpy(B_device, B_host, mem_size, cudaMemcpyHostToDevice));
     CUDA_CHECK(cudaMemcpy(C_device, C_host, mem_size, cudaMemcpyHostToDevice));
 
-    // Create cuBLAS handle if needed
-    cublasHandle_t handle;
-    if (cublasCreate(&handle)) {
-        std::cerr << "Create cublas handle error." << std::endl;
-        return -1;
-    }
-    resources.set_cublas_handle(&handle);
-
-    std::cout << "Running kernel for profiling: " << impl << " ID=" << kernel_id 
-              << " Size=" << size << "x" << size << std::endl;
+    std::cout << "Memory allocation and data transfer completed" << std::endl;
 
     // Warm-up launches
+    std::cout << "Running warm-up launches..." << std::endl;
     for (int i = 0; i < 2; ++i) {
-        launchKernel(config, A_device, B_device, C_device, size, size, size, alpha, beta, handle);
+        launch_sgemm_tiled_shared(A_device, B_device, C_device, size, size, size, alpha, beta);
+        CUDA_CHECK(cudaDeviceSynchronize());
     }
-    CUDA_CHECK(cudaDeviceSynchronize());
 
     // Main kernel launch for profiling
-    launchKernel(config, A_device, B_device, C_device, size, size, size, alpha, beta, handle);
+    std::cout << "Running main kernel for profiling..." << std::endl;
+    launch_sgemm_tiled_shared(A_device, B_device, C_device, size, size, size, alpha, beta);
     CUDA_CHECK(cudaDeviceSynchronize());
 
     std::cout << "Kernel launch completed successfully" << std::endl;

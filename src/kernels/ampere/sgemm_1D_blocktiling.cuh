@@ -66,7 +66,7 @@ __global__ void sgemm_1D_blocktiling(const float* __restrict__ A, const float* _
 
             // Barrier synchronisation until all threads load smem tiles
             __syncthreads();
-
+nvcc --version  
             // Loop over the shared dimension between the smem tiles, which is TILE_SIZE_N
             for (int i = 0; i < TILE_SIZE_N; i++) {
                 float fixed_B = sharedB[i * TILE_SIZE_K + tx]; // Fixate one value from sharedB every iteration
@@ -77,6 +77,10 @@ __global__ void sgemm_1D_blocktiling(const float* __restrict__ A, const float* _
             }
             // Barrier synchronisation until all threads finish computing their results
             __syncthreads();
+
+            // Move all pointers to the starting positions of the next tile
+            A += TILE_SIZE_N; // Move right
+            B += TILE_SIZE_N * K; // Move down
         }
         // Write results back to C
         for (int row = 0; row < ROWS_PER_THREAD; row++) {
