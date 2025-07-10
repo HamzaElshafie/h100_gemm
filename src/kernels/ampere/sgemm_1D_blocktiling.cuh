@@ -54,7 +54,7 @@ __global__ void sgemm_1D_blocktiling(const float* __restrict__ A, const float* _
         const uint smem_tx_B = threadIdx.x % TILE_SIZE_K;
 
         // Calculate how many tiles we have
-        const uint num_tiles = (K + TILE_SIZE_K + 1) / TILE_SIZE_K;
+        const uint num_tiles = (N + TILE_SIZE_N + 1) / TILE_SIZE_N;
 
         // Initialise results array to match how many elements each thread is handing (This will be stores in register file of each thread)
         float thread_results[ROWS_PER_THREAD] = {0.0f};

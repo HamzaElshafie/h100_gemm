@@ -44,6 +44,9 @@ void launchKernel(const KernelConfig& config, const float* __restrict__ A, const
                     case AmpereKernelVariant::sgemm_tiled_shared:
                         ampere::run_sgemm_tiled_shared(A, B, C, M, N, K, alpha, beta);
                         break;
+                    case AmpereKernelVariant::sgemm_1D_blocktiling:
+                        ampere::run_sgemm_1D_blocktiling(A, B, C, M, N, K, alpha, beta);
+                        break;
                     default:
                         throw std::invalid_argument("Unknown Ampere kernel ID");
                 }

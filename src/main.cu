@@ -32,7 +32,7 @@ void printUsage() {
  */
 KernelConfig parseKernelConfig(const std::string& impl, int kernel_id) {
     if (impl == "ampere") { // Check kernel validity
-        if (kernel_id > 2 || kernel_id < 0) { // (TODO: Update later)
+        if (kernel_id > 3 || kernel_id < 0) { // (TODO: Update later)
             throw std::invalid_argument("Invalid Ampere kernel ID");
         }
         return KernelConfig(KernelType::AMPERE, kernel_id);
