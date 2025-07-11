@@ -124,7 +124,8 @@ void run_sgemm_cublas(const float* __restrict__ A, const float* __restrict__ B, 
         beta_ptr,
         C, CUDA_R_32F, K,         // C: (M x K), ldc = K
         CUBLAS_COMPUTE_32F,
-        CUBLAS_GEMM_DEFAULT_TENSOR_OP
+        // CUBLAS_GEMM_DEFAULT_TENSOR_OP // Uses tensor cores
+        CUBLAS_GEMM_DEFAULT
     ));
 
     CUDA_CHECK(cudaDeviceSynchronize());
