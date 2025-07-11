@@ -45,7 +45,7 @@ __global__ void sgemm_tiled_shared(const float* __restrict__ A, const float* __r
         C += (block_row * TILE_SIZE * K) + (block_column * TILE_SIZE); // Move pointer (block_row * TILE_SIZE * K) rows down then (block_column * TILE_SIZE) columns to the right
 
         // Calculate how many tiles we have
-        const uint num_tiles = (K + TILE_SIZE - 1) / TILE_SIZE;
+        const uint num_tiles = CEIL_DIV(K, TILE_SIZE);
         float cumulative_sum = 0.0f;
 
         // Iterate over tiles (Phase 1: Loading data)
