@@ -6,7 +6,7 @@
 #include <cmath>
 
 /**
- * @brief 1D Blocktiling SGEMM (Single-Precision General Matrix Multiply) kernel.
+ * @brief 1D Register Tiling SGEMM (Single-Precision General Matrix Multiply) kernel.
  *
  * Computes the matrix multiplication C = alpha * (A @ B) + beta * C,
  * where A is of size (MxN), B is of size (NxK), and C is of size (MxK).
@@ -27,7 +27,7 @@
  * @param beta    Scalar multiplier for the existing values in matrix C
  */
 template <const uint TILE_SIZE_M, const uint TILE_SIZE_N, const uint TILE_SIZE_K,  const uint ROWS_PER_THREAD>
-__global__ void sgemm_1D_blocktiling(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
+__global__ void sgemm_1D_registertiling(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
     int M, int N, int K, float alpha, float beta) {
          // Allocate shared memory
         __shared__ float sharedA[TILE_SIZE_M * TILE_SIZE_N];

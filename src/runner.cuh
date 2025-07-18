@@ -27,7 +27,7 @@ enum class AmpereKernelVariant {
     naive_sgemm = 0,
     coalesced_sgemm = 1,
     sgemm_tiled_shared = 2,
-    sgemm_1D_blocktiling = 3
+    sgemm_1D_registertiling = 3
 };
 
 /**

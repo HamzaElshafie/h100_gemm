@@ -14,7 +14,7 @@
 #include "sgemm_naive.cuh"
 #include "sgemm_coalesced.cuh"
 #include "sgemm_tiled_shared.cuh"
-#include "sgemm_1D_blocktiling.cuh"
+#include "sgemm_1D_registertiling.cuh"
 
 namespace ampere {
     /**
@@ -69,7 +69,7 @@ namespace ampere {
         CUDA_CHECK(cudaDeviceSynchronize());
     }
 
-    void run_sgemm_1D_blocktiling(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
+    void run_sgemm_1D_registertiling(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
     int M, int N, int K, float alpha, float beta) {
         const uint TILE_SIZE_M = 64;
         const uint TILE_SIZE_K = 64;
@@ -77,7 +77,7 @@ namespace ampere {
         const uint ROWS_PER_THREAD = 8;
         dim3 gridDim(CEIL_DIV(K, TILE_SIZE_K), CEIL_DIV(M, TILE_SIZE_M));
         dim3 blockDim((TILE_SIZE_M * TILE_SIZE_K) / ROWS_PER_THREAD);
-        sgemm_1D_blocktiling<TILE_SIZE_M, TILE_SIZE_N, TILE_SIZE_K, ROWS_PER_THREAD>
+        sgemm_1D_registertiling<TILE_SIZE_M, TILE_SIZE_N, TILE_SIZE_K, ROWS_PER_THREAD>
             <<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
         CUDA_CHECK(cudaGetLastError());
         CUDA_CHECK(cudaDeviceSynchronize());
