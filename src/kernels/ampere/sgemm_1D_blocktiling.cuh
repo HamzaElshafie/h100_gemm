@@ -38,8 +38,8 @@ __global__ void sgemm_1D_blocktiling(const float* __restrict__ A, const float* _
         const uint block_column = blockIdx.x;
 
         // Calculate position of thread within tile (Remapping from 1-D to 2-D)
-        const uint ty = threadIdx.x / TILE_SIZE_K; // (0, TILE_SIZE_K-1)
-        const uint tx = threadIdx.x % TILE_SIZE_K; // (0, TILE_SIZE_K-1)
+        const uint ty = threadIdx.x / TILE_SIZE_K; 
+        const uint tx = threadIdx.x % TILE_SIZE_K;
 
         // Move pointers from A[0], B[0] and C[0] to the starting positions of the tile
         A += block_row * TILE_SIZE_M * N; // Move pointer (block_row * TILE_SIZE_M) rows down
