@@ -11,6 +11,7 @@
         "tuple": "cpp",
         "vector": "cpp",
         "cmath": "cpp",
-        "sgemm_2d_registertiling": "cpp"
+        "sgemm_2d_registertiling": "cpp",
+        "__locale": "cpp"
     }
 }
