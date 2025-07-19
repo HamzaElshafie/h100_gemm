@@ -38,7 +38,7 @@ __global__ void sgemm_2D_registertiling(const float* __restrict__ A, const float
     // Calculate total threads needed per block
     const uint num_threads_per_block = total_results_per_tile / (ROWS_PER_THREAD * COLS_PER_THREAD);
 
-    // Calculate the srides loading sharedA and sharedB from GMEM.
+    // Calculate the srides for loading sharedA and sharedB from GMEM.
     // Threads are assigned across columns and will walk down rows using these strides.
     // At each offset step, threads in a warp access the same row, but different columns,
     // which are contiguous in row-major layout so this achieves coalesced global loads.
