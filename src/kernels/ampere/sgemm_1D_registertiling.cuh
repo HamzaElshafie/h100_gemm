@@ -29,7 +29,7 @@
 template <const uint TILE_SIZE_M, const uint TILE_SIZE_N, const uint TILE_SIZE_K,  const uint ROWS_PER_THREAD>
 __global__ void sgemm_1D_registertiling(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
     int M, int N, int K, float alpha, float beta) {
-         // Allocate shared memory
+        // Allocate shared memory
         __shared__ float sharedA[TILE_SIZE_M * TILE_SIZE_N];
         __shared__ float sharedB[TILE_SIZE_N * TILE_SIZE_K];
 

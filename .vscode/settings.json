@@ -10,6 +10,7 @@
         "ratio": "cpp",
         "tuple": "cpp",
         "vector": "cpp",
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "sgemm_2d_registertiling": "cpp"
     }
 }
