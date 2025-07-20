@@ -19,7 +19,7 @@ __global__ void sgemm_2D_registertiling(const float* __restrict__ A, const float
 
     // Calculate position of thread within tile (Remapping from 1-D to 2-D) Note --> Each thread is a grid in itself hanlding ROWS_PER_THREAD x COLS_PER_THREAD
     const uint ty = threadIdx.x / (TILE_SIZE_K / COLS_PER_THREAD);
-    const uint tx = threadIdx.x % (TILE_SIZE_K/ COLS_PER_THREAD);
+    const uint tx = threadIdx.x % (TILE_SIZE_K / COLS_PER_THREAD);
 
     // Move pointers from A[0], B[0] and C[0] to the starting positions of the tile
     A += block_row * TILE_SIZE_M * N;                                  // Move pointer (block_row * TILE_SIZE_M) rows down
@@ -47,4 +47,25 @@ __global__ void sgemm_2D_registertiling(const float* __restrict__ A, const float
 
     // Calculate how many tiles we have
     const uint num_tiles = CEIL_DIV(N, TILE_SIZE_N);
+    float thread_results[ROWS_PER_THREAD * COLS_PER_THREAD] = {0.0f};
+    float reg_m[ROWS_PER_THREAD] = {0.0f};
+    float ref_k[COLS_PER_THREAD] = {0.0f};
+
+    // Outer loop iterate over tiles
+    for (int t = 0; t < num_tiles; t++) {
+        // Loop to load SMEM tiles 
+        for (int load_offset = 0; load_offset < TILE_SIZE_M; load_offset+=strideA) {
+            sharedA[(smem_ty_A + load_offset) * TILE_SIZE_N + smem_tx_A] = 
+                A[(smem_ty_A + load_offset) * N + smem_tx_A]; // Remember A is already offset at the start of the tile so
+                                                            // we only index locally. Thats the beauty of it!!
+        }
+        for (int load_offset = 0; load_offset < TILE_SIZE_N; load_offset+=strideB) {
+            sharedB[(smem_ty_B + load_offset) * TILE_SIZE_K + smem_tx_B] = 
+                B[(smem_ty_B + load_offset) * K + smem_tx_B];
+        }
+        __syncthreads();
+
+        // 
     }
+}
+
