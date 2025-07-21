@@ -112,30 +112,42 @@ namespace ampere {
 }
 
 namespace cublas {
+//     void run_sgemm_cublas(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
+//                            int M, int N, int K, float alpha, float beta, cublasHandle_t handle) {
+//     // Standard cuBLAS GEMM in full FP32 precision (no tensor cores, no mixed precision)
+//     CUBLAS_CHECK(cublasGemmEx(
+//         handle,
+//         CUBLAS_OP_N, CUBLAS_OP_N,  // No transpose
+//         K, M, N,                   // Note: cuBLAS is column-major: C[K x M] = B[K x N] × A[N x M]
+//         &alpha,
+//         B, CUDA_R_32F, K,         // B: (N x K), lda = K
+//         A, CUDA_R_32F, N,         // A: (M x N), lda = N
+//         &beta,
+//         C, CUDA_R_32F, K,         // C: (M x K), ldc = K
+//         CUBLAS_COMPUTE_32F_PEDANTIC,  // Strict full FP32 compute, disables tensor cores
+//         CUBLAS_GEMM_DEFAULT        // Standard algo
+//     ));
+
+//     CUDA_CHECK(cudaDeviceSynchronize());
+// }
 
     void run_sgemm_cublas(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
-                      int M, int N, int K, float alpha, float beta,
-                      cublasHandle_t handle) {
+    int M, int N, int K, float alpha, float beta, cublasHandle_t handle) {
 
     const void* alpha_ptr = static_cast<const void*>(&alpha);
     const void* beta_ptr  = static_cast<const void*>(&beta);
 
-    //cublasComputeType_t computeType = CUBLAS_COMPUTE_32F;             // Tensor Cores on 
-    cublasComputeType_t computeType = CUBLAS_COMPUTE_32F_PEDANTIC; // Tensor Cores off
-
     CUBLAS_CHECK(cublasGemmEx(
         handle,
-        CUBLAS_OP_N, CUBLAS_OP_N,
-        K, M, N,
+        CUBLAS_OP_N, CUBLAS_OP_N,  // no transpose
+        K, M, N,                   // cuBLAS uses column-major: compute C[K×M] = A[K×N] × B[N×M]
         alpha_ptr,
-        B, CUDA_R_16F, K,
-        A, CUDA_R_16F, N,
+        B, CUDA_R_16F, K,         // B: (N x K), lda = K
+        A, CUDA_R_16F, N,         // A: (M x N), lda = N
         beta_ptr,
-        C, CUDA_R_32F, K,
-        computeType,
-        CUBLAS_GEMM_DEFAULT
+        C, CUDA_R_32F, K,         // C: (M x K), ldc = K
+        CUBLAS_COMPUTE_32F,
+        CUBLAS_GEMM_DEFAULT_TENSOR_OP // Uses tensor cores
     ));
-
-    CUDA_CHECK(cudaDeviceSynchronize());
 }
 }
