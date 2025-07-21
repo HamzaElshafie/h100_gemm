@@ -85,62 +85,54 @@ namespace ampere {
     }
 
     void run_sgemm_2D_registertiling(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
-    int M, int N, int K, float alpha, float beta) {
+                                 int M, int N, int K, float alpha, float beta) {
+    const uint TILE_SIZE_N = 8;
+    const uint ROWS_PER_THREAD = 8;
+    const uint COLS_PER_THREAD = 8;
+
+    if (M >= 128 && K >= 128) {
         const uint TILE_SIZE_M = 128;
         const uint TILE_SIZE_K = 128;
-        const uint TILE_SIZE_N = 8;
-        const uint ROWS_PER_THREAD = 8;
-        const uint COLS_PER_THREAD = 8;
         dim3 gridDim(CEIL_DIV(K, TILE_SIZE_K), CEIL_DIV(M, TILE_SIZE_M));
         dim3 blockDim((TILE_SIZE_M * TILE_SIZE_K) / (ROWS_PER_THREAD * COLS_PER_THREAD));
         sgemm_2D_registertiling<TILE_SIZE_M, TILE_SIZE_N, TILE_SIZE_K, ROWS_PER_THREAD, COLS_PER_THREAD>
             <<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
-        CUDA_CHECK(cudaGetLastError());
-        CUDA_CHECK(cudaDeviceSynchronize());
+    } else {
+        // fallback to smaller tile
+        const uint TILE_SIZE_M = 64;
+        const uint TILE_SIZE_K = 64;
+        dim3 gridDim(CEIL_DIV(K, TILE_SIZE_K), CEIL_DIV(M, TILE_SIZE_M));
+        dim3 blockDim((TILE_SIZE_M * TILE_SIZE_K) / (ROWS_PER_THREAD * COLS_PER_THREAD));
+        sgemm_2D_registertiling<TILE_SIZE_M, TILE_SIZE_N, TILE_SIZE_K, ROWS_PER_THREAD, COLS_PER_THREAD>
+            <<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
+    }
+    CUDA_CHECK(cudaGetLastError());
+    CUDA_CHECK(cudaDeviceSynchronize());
     }
 }
 
 namespace cublas {
-/**
- * @brief Launches the cuBLAS SGEMM reference kernel using cublasGemmEx.
- *
- * This function uses cuBLAS to perform C = alpha * A * B + beta * C.
- * All matrices are assumed to be in row-major order.
- * cuBLAS expects column-major, so we swap A/B and M/N.
- *
- * @param A       Pointer to input matrix A (device, row-major)
- * @param B       Pointer to input matrix B (device, row-major)
- * @param C       Pointer to output matrix C (device, row-major)
- * @param M       Number of rows of matrix A and C
- * @param N       Number of columns of matrix B and C
- * @param K       Number of columns of matrix A and rows of matrix B
- * @param alpha   Scalar multiplier for the matrix product
- * @param beta    Scalar multiplier for the existing values in matrix C
- * @param handle  cuBLAS handle
- */
-void run_sgemm_cublas(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
-    int M, int N, int K, float alpha, float beta, cublasHandle_t handle) {
 
-    // Use cuBLAS GEMM with Tensor Cores via FP16 inputs and FP32 accumulate
-    // Note: Data must be convertible to FP16
+    void run_sgemm_cublas(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
+                      int M, int N, int K, float alpha, float beta,
+                      cublasHandle_t handle) {
 
-    // Convert alpha and beta to void* (they are in FP32)
     const void* alpha_ptr = static_cast<const void*>(&alpha);
     const void* beta_ptr  = static_cast<const void*>(&beta);
 
-    // Launch GEMM: C = alpha * A x B + beta * C
-    // All matrices are column-major by default
+    //cublasComputeType_t computeType = CUBLAS_COMPUTE_32F;             // Tensor Cores on 
+    cublasComputeType_t computeType = CUBLAS_COMPUTE_32F_PEDANTIC; // Tensor Cores off
+
     CUBLAS_CHECK(cublasGemmEx(
         handle,
-        CUBLAS_OP_N, CUBLAS_OP_N,  // no transpose
-        K, M, N,                   // cuBLAS uses column-major: compute C[K×M] = A[K×N] × B[N×M]
+        CUBLAS_OP_N, CUBLAS_OP_N,
+        K, M, N,
         alpha_ptr,
-        B, CUDA_R_16F, K,         // B: (N x K), lda = K
-        A, CUDA_R_16F, N,         // A: (M x N), lda = N
+        B, CUDA_R_16F, K,
+        A, CUDA_R_16F, N,
         beta_ptr,
-        C, CUDA_R_32F, K,         // C: (M x K), ldc = K
-        CUBLAS_COMPUTE_32F,
-        // CUBLAS_GEMM_DEFAULT_TENSOR_OP // Uses tensor cores
+        C, CUDA_R_32F, K,
+        computeType,
         CUBLAS_GEMM_DEFAULT
     ));
 
