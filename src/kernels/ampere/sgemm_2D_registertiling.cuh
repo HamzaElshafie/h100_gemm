@@ -49,7 +49,7 @@ __global__ void sgemm_2D_registertiling(const float* __restrict__ A, const float
     const uint num_tiles = CEIL_DIV(N, TILE_SIZE_N);
     float thread_results[ROWS_PER_THREAD * COLS_PER_THREAD] = {0.0f};
     float reg_m[ROWS_PER_THREAD] = {0.0f};
-    float ref_k[COLS_PER_THREAD] = {0.0f};
+    float reg_k[COLS_PER_THREAD] = {0.0f};
 
     // Outer loop iterate over tiles
     for (int t = 0; t < num_tiles; t++) {
@@ -65,7 +65,37 @@ __global__ void sgemm_2D_registertiling(const float* __restrict__ A, const float
         }
         __syncthreads();
 
-        // 
+        // Outer loop over shared dimension N
+        for (int i = 0; i < TILE_SIZE_N; i++) {
+            // Load into registers one col from sharedA and one row from sharedB
+            for (int row = 0; row < ROWS_PER_THREAD; row++) {
+                uint global_smem_row_idx = ty * ROWS_PER_THREAD + row;
+                reg_m[row] = sharedA[global_smem_row_idx * TILE_SIZE_N + i];
+            }
+            for (int col = 0; col < COLS_PER_THREAD; col++) {
+                uint global_smem_col_idx = tx * COLS_PER_THREAD + col;
+                reg_k[col] = sharedB[i * TILE_SIZE_K + global_smem_col_idx];
+            }
+
+            // Calculate outer product between reg_m and reg_k to produce the partial results matrix of the thread 
+            for (uint m = 0; m < ROWS_PER_THREAD; m++) {
+                for (uint k = 0; k < COLS_PER_THREAD; k++) {
+                    thread_results[m * COLS_PER_THREAD + k] += reg_m[m] * reg_k[k]; // --> (ROWS_PER_THREAD x COLS_PER_THREAD) matrix
+                }
+            }
+        }
+        __syncthreads();
+
+        A += TILE_SIZE_N; // Move right
+        B += TILE_SIZE_N * K; // Move down                               
+    }
+    // Write results of the thread back to C
+    for (uint row = 0; row < ROWS_PER_THREAD; row++) {
+        for (uint col = 0; col < COLS_PER_THREAD; col++) {
+            uint global_row_idx = ty * ROWS_PER_THREAD + row;
+            uint global_col_idx = tx * COLS_PER_THREAD + col;
+            C[global_row_idx * K + global_col_idx] = (alpha * thread_results[row * COLS_PER_THREAD + col]) + (beta * C[global_row_idx * K + global_col_idx]);
+        }
     }
 }
 

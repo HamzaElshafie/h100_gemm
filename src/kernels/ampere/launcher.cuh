@@ -17,6 +17,9 @@ namespace ampere {
 
     void run_sgemm_1D_registertiling(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
     int M, int N, int K, float alpha, float beta);
+
+    void run_sgemm_2D_registertiling(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
+    int M, int N, int K, float alpha, float beta)
 }
 
 namespace cublas {
