@@ -56,7 +56,7 @@ __global__ void sgemm_1D_registertiling(const float* __restrict__ A, const float
         // Calculate how many tiles we have
         const uint num_tiles = CEIL_DIV(N, TILE_SIZE_N);
 
-        // Initialise results array to match how many elements each thread is handing (This will be stores in register file of each thread)
+        // Initialise results array to match how many elements each thread is handing (This will be stored in register file of each thread)
         float thread_results[ROWS_PER_THREAD] = {0.0f};
 
         // Iterate over tiles (Phase 1: Loading data)

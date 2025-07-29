@@ -89,23 +89,12 @@ namespace ampere {
     const uint TILE_SIZE_N = 8;
     const uint ROWS_PER_THREAD = 8;
     const uint COLS_PER_THREAD = 8;
-
-    if (M >= 128 && K >= 128) {
-        const uint TILE_SIZE_M = 128;
-        const uint TILE_SIZE_K = 128;
-        dim3 gridDim(CEIL_DIV(K, TILE_SIZE_K), CEIL_DIV(M, TILE_SIZE_M));
-        dim3 blockDim((TILE_SIZE_M * TILE_SIZE_K) / (ROWS_PER_THREAD * COLS_PER_THREAD));
-        sgemm_2D_registertiling<TILE_SIZE_M, TILE_SIZE_N, TILE_SIZE_K, ROWS_PER_THREAD, COLS_PER_THREAD>
-            <<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
-    } else {
-        // fallback to smaller tile
-        const uint TILE_SIZE_M = 64;
-        const uint TILE_SIZE_K = 64;
-        dim3 gridDim(CEIL_DIV(K, TILE_SIZE_K), CEIL_DIV(M, TILE_SIZE_M));
-        dim3 blockDim((TILE_SIZE_M * TILE_SIZE_K) / (ROWS_PER_THREAD * COLS_PER_THREAD));
-        sgemm_2D_registertiling<TILE_SIZE_M, TILE_SIZE_N, TILE_SIZE_K, ROWS_PER_THREAD, COLS_PER_THREAD>
-            <<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
-    }
+    const uint TILE_SIZE_M = 128;
+    const uint TILE_SIZE_K = 128;
+    dim3 gridDim(CEIL_DIV(K, TILE_SIZE_K), CEIL_DIV(M, TILE_SIZE_M));
+    dim3 blockDim((TILE_SIZE_M * TILE_SIZE_K) / (ROWS_PER_THREAD * COLS_PER_THREAD));
+    sgemm_2D_registertiling<TILE_SIZE_M, TILE_SIZE_N, TILE_SIZE_K, ROWS_PER_THREAD, COLS_PER_THREAD>
+        <<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
     }
