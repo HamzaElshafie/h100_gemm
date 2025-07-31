@@ -7,7 +7,7 @@
 
 
 template <const uint TILE_SIZE_M, const uint TILE_SIZE_N, const uint TILE_SIZE_K,  const uint ROWS_PER_THREAD, const uint COLS_PER_THREAD>
-__global__ void sgemm_2D_registertiling(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
+__global__ void sgemm_vectorised(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
     int M, int N, int K, float alpha, float beta) {
     // Allocate shared memory
     __shared__ float sharedA[TILE_SIZE_M * TILE_SIZE_N];
@@ -26,17 +26,24 @@ __global__ void sgemm_2D_registertiling(const float* __restrict__ A, const float
     B += block_column * TILE_SIZE_K;                                   // Move pointer (block_column * TILE_SIZE_K) columns to the right
     C += (block_row * TILE_SIZE_M * K) + (block_column * TILE_SIZE_K); // Move pointer (block_row * TILE_SIZE_M * K) rows down then (block_column * TILE_SIZE_K) columns to the right
 
-    // Map each thread to one 4-float chunk that it will load.
-    const uint smem_ty_A = threadIdx.x / (TILE_SIZE_N / 4); // --> 0, ..., 127
-    const uint smem_tx_A = threadIdx.x % (TILE_SIZE_N / 4); // --> 0, 1
+    // Calculate position of thread within shared memory tile (To be used while loading into proper postions in smem)
+    const uint smem_ty_A = threadIdx.x / TILE_SIZE_N;
+    const uint smem_tx_A = threadIdx.x % TILE_SIZE_N;
 
-    const uint smem_ty_B = threadIdx.x / (TILE_SIZE_K / 4); // --> 0, ..., 7
-    const uint smem_tx_B = threadIdx.x % (TILE_SIZE_K / 4); // --> 0, ..., 31
+    const uint smem_ty_B = threadIdx.x / TILE_SIZE_K;
+    const uint smem_tx_B = threadIdx.x % TILE_SIZE_K;
 
     // Total results calculated by a single tile in C
     const uint total_results_per_tile = TILE_SIZE_M * TILE_SIZE_K;
     // Calculate total threads needed per block
     const uint num_threads_per_block = total_results_per_tile / (ROWS_PER_THREAD * COLS_PER_THREAD);
+
+    // Calculate the srides for loading sharedA and sharedB from GMEM.
+    // Threads are assigned across columns and will walk down rows using these strides.
+    // At each offset step, threads in a warp access the same row, but different columns,
+    // which are contiguous in row-major layout so this achieves coalesced global loads.
+    const uint strideA = num_threads_per_block / TILE_SIZE_N;
+    const uint strideB = num_threads_per_block / TILE_SIZE_K;
 
     // Calculate how many tiles we have
     const uint num_tiles = CEIL_DIV(N, TILE_SIZE_N);
@@ -46,17 +53,16 @@ __global__ void sgemm_2D_registertiling(const float* __restrict__ A, const float
 
     // Outer loop iterate over tiles
     for (int t = 0; t < num_tiles; t++) {
-        // Populate smem using vector loads
-        float4 tempA = reinterpret_cast<float4*>(&A[smem_ty_A * N + smem_tx_A*4])[0]; // [0] dereference issues one ld.global.v4.f32
-        // Transpose A (instead of 128x8 previously for ex, now it will be 8x128)
-        sharedA[(smem_tx_A * 4 + 0) * TILE_SIZE_M + smem_ty_A] = tempA.x;
-        sharedA[(smem_tx_A * 4 + 1) * TILE_SIZE_M + smem_ty_A] = tempA.y;
-        sharedA[(smem_tx_A * 4 + 2) * TILE_SIZE_M + smem_ty_A] = tempA.z;
-        sharedA[(smem_tx_A * 4 + 3) * TILE_SIZE_M + smem_ty_A] = tempA.w;
-
-        float4 tempB = reinterpret_cast<float4*>(&B[smem_ty_B * K + smem_tx_B*4])[0];
-        reinterpret_cast<float4*>(&sharedB[smem_ty_B * TILE_SIZE_K + smem_tx_B*4])[0] = tempB;
-
+        // Loop to load SMEM tiles 
+        for (int load_offset = 0; load_offset < TILE_SIZE_M; load_offset+=strideA) {
+            sharedA[(smem_ty_A + load_offset) * TILE_SIZE_N + smem_tx_A] = 
+                A[(smem_ty_A + load_offset) * N + smem_tx_A]; // Remember A is already offset at the start of the tile so
+                                                            // we only index locally. Thats the beauty of it!!
+        }
+        for (int load_offset = 0; load_offset < TILE_SIZE_N; load_offset+=strideB) {
+            sharedB[(smem_ty_B + load_offset) * TILE_SIZE_K + smem_tx_B] = 
+                B[(smem_ty_B + load_offset) * K + smem_tx_B];
+        }
         __syncthreads();
 
         // Outer loop over shared dimension N
@@ -64,8 +70,7 @@ __global__ void sgemm_2D_registertiling(const float* __restrict__ A, const float
             // Load into registers one col from sharedA and one row from sharedB
             for (int row = 0; row < ROWS_PER_THREAD; row++) {
                 uint global_smem_row_idx = ty * ROWS_PER_THREAD + row;
-                reg_m[row] = sharedA[global_smem_row_idx * TILE_SIZE_N + i]; // --> Note: This is a strided access by TILE_SIZE_N into the SMEM, 
-                                                                            // we fix this in the vectorised kernel. Same for sharedB
+                reg_m[row] = sharedA[global_smem_row_idx * TILE_SIZE_N + i]; 
             }
             for (int col = 0; col < COLS_PER_THREAD; col++) {
                 uint global_smem_col_idx = tx * COLS_PER_THREAD + col;
