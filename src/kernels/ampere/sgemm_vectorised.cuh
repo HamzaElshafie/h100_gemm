@@ -42,7 +42,7 @@ __global__ void sgemm_vectorised(const float* __restrict__ A, const float* __res
     // Outer loop iterate over tiles
     for (int t = 0; t < num_tiles; t++) {
         // Populate smem using vector loads
-        float4 tempA = reinterpret_cast<const float4*>(&A[smem_ty_A * N + smem_tx_A*4])[0]; // [0] dereference issues one ld.global.v4.f32
+        float4 tempA = reinterpret_cast<const float4*>(&A[smem_ty_A * N + smem_tx_A*4])[0]; // [0] dereference issues one ld.global.nc.v4.f32 
         // Transpose A (instead of 128x8 previously for ex, now it will be 8x128)
         sharedA[(smem_tx_A * 4 + 0) * TILE_SIZE_M + smem_ty_A] = tempA.x;
         sharedA[(smem_tx_A * 4 + 1) * TILE_SIZE_M + smem_ty_A] = tempA.y;
