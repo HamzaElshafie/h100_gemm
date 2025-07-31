@@ -61,11 +61,11 @@ __global__ void sgemm_vectorised(const float* __restrict__ A, const float* __res
 
         // Outer loop over shared dimension N
         for (int i = 0; i < TILE_SIZE_N; i++) {
-            // Load into registers one col from sharedA and one row from sharedB
+            // Load into registers one "col" (its acc row now) from sharedA and one row from sharedB
             for (int row = 0; row < ROWS_PER_THREAD; row++) {
                 uint global_smem_row_idx = ty * ROWS_PER_THREAD + row;
-                reg_m[row] = sharedA[global_smem_row_idx * TILE_SIZE_N + i]; // --> Note: This is a strided access by TILE_SIZE_N into the SMEM, 
-                                                                            // we fix this in the vectorised kernel. Same for sharedB
+                reg_m[row] = sharedA[i * TILE_SIZE_M + global_smem_row_idx]; // i will be the same for the whole "column" although since its transposed we are
+                                                                            // accessing same row. Notice how we also skip rows by TILE_SIZE_M now
             }
             for (int col = 0; col < COLS_PER_THREAD; col++) {
                 uint global_smem_col_idx = tx * COLS_PER_THREAD + col;
@@ -86,10 +86,17 @@ __global__ void sgemm_vectorised(const float* __restrict__ A, const float* __res
     }
     // Write results of the thread back to C
     for (uint row = 0; row < ROWS_PER_THREAD; row++) {
-        for (uint col = 0; col < COLS_PER_THREAD; col++) {
+        // handle COLS_PER_THREAD in chunks of 4
+        for (uint col = 0; col < COLS_PER_THREAD; col+=4) {
             uint global_row_idx = ty * ROWS_PER_THREAD + row;
             uint global_col_idx = tx * COLS_PER_THREAD + col;
-            C[global_row_idx * K + global_col_idx] = (alpha * thread_results[row * COLS_PER_THREAD + col]) + (beta * C[global_row_idx * K + global_col_idx]);
+            float4 tempC = reinterpret_cast<float4*>(&C[global_row_idx * K + global_col_idx])[0];
+            tempC.x = (alpha * thread_results[row * COLS_PER_THREAD + col]) + (beta * tempC.x);
+            tempC.y = (alpha * thread_results[row * COLS_PER_THREAD + col+1]) + (beta * tempC.y);
+            tempC.z = (alpha * thread_results[row * COLS_PER_THREAD + col+2]) + (beta * tempC.z);
+            tempC.w = (alpha * thread_results[row * COLS_PER_THREAD + col+3]) + (beta * tempC.w);
+
+            reinterpret_cast<float4*>(&C[global_row_idx * K + global_col_idx])[0] = tempC;
         }
     }
 }
