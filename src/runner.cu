@@ -50,6 +50,9 @@ void launchKernel(const KernelConfig& config, const float* __restrict__ A, const
                     case AmpereKernelVariant::sgemm_2D_registertiling:
                         ampere::run_sgemm_2D_registertiling(A, B, C, M, N, K, alpha, beta);
                         break;
+                    case AmpereKernelVariant::sgemm_vectorised:
+                        ampere::run_sgemm_vectorised(A, B, C, M, N, K, alpha, beta);
+                        break;
                     default:
                         throw std::invalid_argument("Unknown Ampere kernel ID");
                 }

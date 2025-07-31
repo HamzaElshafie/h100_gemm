@@ -33,11 +33,6 @@ __global__ void sgemm_vectorised(const float* __restrict__ A, const float* __res
     const uint smem_ty_B = threadIdx.x / (TILE_SIZE_K / 4); // --> 0, ..., 7
     const uint smem_tx_B = threadIdx.x % (TILE_SIZE_K / 4); // --> 0, ..., 31
 
-    // Total results calculated by a single tile in C
-    const uint total_results_per_tile = TILE_SIZE_M * TILE_SIZE_K;
-    // Calculate total threads needed per block
-    const uint num_threads_per_block = total_results_per_tile / (ROWS_PER_THREAD * COLS_PER_THREAD);
-
     // Calculate how many tiles we have
     const uint num_tiles = CEIL_DIV(N, TILE_SIZE_N);
     float thread_results[ROWS_PER_THREAD * COLS_PER_THREAD] = {0.0f};
@@ -47,14 +42,14 @@ __global__ void sgemm_vectorised(const float* __restrict__ A, const float* __res
     // Outer loop iterate over tiles
     for (int t = 0; t < num_tiles; t++) {
         // Populate smem using vector loads
-        float4 tempA = reinterpret_cast<float4*>(&A[smem_ty_A * N + smem_tx_A*4])[0]; // [0] dereference issues one ld.global.v4.f32
+        float4 tempA = reinterpret_cast<const float4*>(&A[smem_ty_A * N + smem_tx_A*4])[0]; // [0] dereference issues one ld.global.v4.f32
         // Transpose A (instead of 128x8 previously for ex, now it will be 8x128)
         sharedA[(smem_tx_A * 4 + 0) * TILE_SIZE_M + smem_ty_A] = tempA.x;
         sharedA[(smem_tx_A * 4 + 1) * TILE_SIZE_M + smem_ty_A] = tempA.y;
         sharedA[(smem_tx_A * 4 + 2) * TILE_SIZE_M + smem_ty_A] = tempA.z;
         sharedA[(smem_tx_A * 4 + 3) * TILE_SIZE_M + smem_ty_A] = tempA.w;
 
-        float4 tempB = reinterpret_cast<float4*>(&B[smem_ty_B * K + smem_tx_B*4])[0];
+        float4 tempB = reinterpret_cast<const float4*>(&B[smem_ty_B * K + smem_tx_B*4])[0];
         reinterpret_cast<float4*>(&sharedB[smem_ty_B * TILE_SIZE_K + smem_tx_B*4])[0] = tempB;
 
         __syncthreads();
