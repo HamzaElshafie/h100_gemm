@@ -18,8 +18,8 @@ __global__ void sgemm_vectorised(const float* __restrict__ A, const float* __res
     const uint block_column = blockIdx.x;
 
     // Calculate position of thread within tile (Remapping from 1-D to 2-D) Note --> Each thread is a grid in itself hanlding ROWS_PER_THREAD x COLS_PER_THREAD
-    const uint ty = threadIdx.x / (TILE_SIZE_K / COLS_PER_THREAD);
-    const uint tx = threadIdx.x % (TILE_SIZE_K / COLS_PER_THREAD);
+    const uint ty = threadIdx.x / (TILE_SIZE_K / COLS_PER_THREAD); // 0, ..., 15
+    const uint tx = threadIdx.x % (TILE_SIZE_K / COLS_PER_THREAD); // 0, ..., 15
 
     // Move pointers from A[0], B[0] and C[0] to the starting positions of the tile
     A += block_row * TILE_SIZE_M * N;                                  // Move pointer (block_row * TILE_SIZE_M) rows down
@@ -42,7 +42,7 @@ __global__ void sgemm_vectorised(const float* __restrict__ A, const float* __res
     // Outer loop iterate over tiles
     for (int t = 0; t < num_tiles; t++) {
         // Populate smem using vector loads
-        float4 tempA = reinterpret_cast<const float4*>(&A[smem_ty_A * N + smem_tx_A*4])[0]; // [0] dereference issues one ld.global.nc.v4.f32 
+        float4 tempA = reinterpret_cast<const float4*>(&A[smem_ty_A * N + smem_tx_A*4])[0]; // [0] dereference issues one ld.global.v4.f32 
         // Transpose A (instead of 128x8 previously for ex, now it will be 8x128)
         sharedA[(smem_tx_A * 4 + 0) * TILE_SIZE_M + smem_ty_A] = tempA.x;
         sharedA[(smem_tx_A * 4 + 1) * TILE_SIZE_M + smem_ty_A] = tempA.y;
@@ -57,14 +57,25 @@ __global__ void sgemm_vectorised(const float* __restrict__ A, const float* __res
         // Outer loop over shared dimension N
         for (int i = 0; i < TILE_SIZE_N; i++) {
             // Load into registers one "col" (its acc row now) from sharedA and one row from sharedB
-            for (int row = 0; row < ROWS_PER_THREAD; row++) {
+            // We can actually also use vectorised loads here to cut smem load instructions by 4x.
+            for (int row = 0; row < ROWS_PER_THREAD; row+=4) {
                 uint global_smem_row_idx = ty * ROWS_PER_THREAD + row;
-                reg_m[row] = sharedA[i * TILE_SIZE_M + global_smem_row_idx]; // i will be the same for the whole "column" although since its transposed we are
-                                                                            // accessing same row. Notice how we also skip rows by TILE_SIZE_M now
+                // i will be the same for the whole "column" although since its transposed we are accessing same row. 
+                // Notice how we also skip rows by TILE_SIZE_M now
+                float4 temp_shared_A = reinterpret_cast<float4*>(&sharedA[i * TILE_SIZE_M + global_smem_row_idx])[0];
+                reg_m[row + 0] = temp_shared_A.x;
+                reg_m[row + 1] = temp_shared_A.y;
+                reg_m[row + 2] = temp_shared_A.z;
+                reg_m[row + 3] = temp_shared_A.w;
             }
-            for (int col = 0; col < COLS_PER_THREAD; col++) {
+            for (int col = 0; col < COLS_PER_THREAD; col+=4) {
+                // We can do same vectorised loads 
                 uint global_smem_col_idx = tx * COLS_PER_THREAD + col;
-                reg_k[col] = sharedB[i * TILE_SIZE_K + global_smem_col_idx];
+                float4 temp_shared_B = reinterpret_cast<float4*>(&sharedB[i * TILE_SIZE_K + global_smem_col_idx])[0];
+                reg_k[col + 0] = temp_shared_B.x;
+                reg_k[col + 1] = temp_shared_B.y;
+                reg_k[col + 2] = temp_shared_B.z;
+                reg_k[col + 3] = temp_shared_B.w;
             }
 
             // Calculate outer product between reg_m and reg_k to produce the partial results matrix of the thread 
