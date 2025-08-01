@@ -42,7 +42,7 @@ __global__ void sgemm_vectorised(const float* __restrict__ A, const float* __res
     // Outer loop iterate over tiles
     for (int t = 0; t < num_tiles; t++) {
         // Populate smem using vector loads
-        float4 tempA = reinterpret_cast<const float4*>(&A[smem_ty_A * N + smem_tx_A*4])[0]; // [0] dereference issues one ld.global.v4.f32 
+        float4 tempA = reinterpret_cast<const float4*>(&A[smem_ty_A * N + smem_tx_A*4])[0]; // [0] dereference issues one ld.global.nc.v4.f32
         // Transpose A (instead of 128x8 previously for ex, now it will be 8x128)
         sharedA[(smem_tx_A * 4 + 0) * TILE_SIZE_M + smem_ty_A] = tempA.x;
         sharedA[(smem_tx_A * 4 + 1) * TILE_SIZE_M + smem_ty_A] = tempA.y;
@@ -62,7 +62,7 @@ __global__ void sgemm_vectorised(const float* __restrict__ A, const float* __res
                 uint global_smem_row_idx = ty * ROWS_PER_THREAD + row;
                 // i will be the same for the whole "column" although since its transposed we are accessing same row. 
                 // Notice how we also skip rows by TILE_SIZE_M now
-                float4 temp_shared_A = reinterpret_cast<float4*>(&sharedA[i * TILE_SIZE_M + global_smem_row_idx])[0];
+                float4 temp_shared_A = reinterpret_cast<float4*>(&sharedA[i * TILE_SIZE_M + global_smem_row_idx])[0]; // ld.shared.v4.f32
                 reg_m[row + 0] = temp_shared_A.x;
                 reg_m[row + 1] = temp_shared_A.y;
                 reg_m[row + 2] = temp_shared_A.z;
