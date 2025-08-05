@@ -52,7 +52,7 @@ Serialisation just means the requests are queued and handled one-by-one, rather 
 - If every thread in the warp accesses a different bank: no conflicts, full parallelism.
 - If two threads access different addresses in the same bank: conflict, must serve one, then the other.
 
-![Bank Conflicts](../figures/BanksOrg.excalidraw.png)
+![Bank Conflicts](../figures/BankConflicts.excalidraw.png)
 
 Bank conflicts are a performance drawback because they force the warp to wait extra cycles for all the required memory accesses to complete, effectively slowing down shared memory bandwidth. This is especially noticeable in tightly optimised matrix multiply or reduction kernels, where bank conflicts can quickly become a limiting factor.
 
@@ -70,5 +70,6 @@ needed again soon, it can be served directly from this buffer instead of going b
 
 Warp tiling helps here because each warp works on a small, fixed sub‑tile of the output matrix, so it tends to reuse the same registers repeatedly 
 in the inner loop. This makes bank conflicts less likely and increases the chances that operands can be reused directly from the OCU buffer.
+
 
 
