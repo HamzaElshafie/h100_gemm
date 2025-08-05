@@ -44,6 +44,20 @@ Shared memory in each SM is divided into 32 banks, each 4 bytes wide. Every time
 - The bank is determined by:
    - bank_index = word_index % 32
 
+![Bank Organisation](figures/BanksOrg.excalidraw.png)
+
+A bank conflict happens when two or more threads in the same warp try to access different words in the same bank in the same instruction. Since each bank can only handle one request at a time, these accesses are serialised: the bank serves one thread, then the next, and so on.
+Serialisation just means the requests are queued and handled one-by-one, rather than all at once. This delays the warp because the memory operation takes more than one cycle to complete, and the warp can’t continue until every thread’s request is satisfied.
+
+- If every thread in the warp accesses a different bank: no conflicts, full parallelism.
+- If two threads access different addresses in the same bank: conflict, must serve one, then the other.
+
+![Bank Conflicts](figures/BanksOrg.excalidraw.png)
+
+Bank conflicts are a performance drawback because they force the warp to wait extra cycles for all the required memory accesses to complete, effectively slowing down shared memory bandwidth. This is especially noticeable in tightly optimised matrix multiply or reduction kernels, where bank conflicts can quickly become a limiting factor.
+
+Warp tiling helps by making it easier to design access patterns where threads in a warp are likely to hit different banks, so you minimise or avoid bank conflicts without having to pad the whole shared memory tile.
+
 ### Improved register cache locality:
    
 The register file (RF) inside each Streaming Multiprocessor stores per-thread variables. On Hopper, it’s split into multiple single‑ported banks.
@@ -56,4 +70,5 @@ needed again soon, it can be served directly from this buffer instead of going b
 
 Warp tiling helps here because each warp works on a small, fixed sub‑tile of the output matrix, so it tends to reuse the same registers repeatedly 
 in the inner loop. This makes bank conflicts less likely and increases the chances that operands can be reused directly from the OCU buffer.
+
 
