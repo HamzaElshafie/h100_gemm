@@ -77,7 +77,7 @@ __global__ void sgemm_vectorised(const float* __restrict__ A, const float* __res
                 reg_k[col + 2] = temp_shared_B.z;
                 reg_k[col + 3] = temp_shared_B.w;
             }
-
+            
             // Calculate outer product between reg_m and reg_k to produce the partial results matrix of the thread 
             for (uint m = 0; m < ROWS_PER_THREAD; m++) {
                 for (uint k = 0; k < COLS_PER_THREAD; k++) {
