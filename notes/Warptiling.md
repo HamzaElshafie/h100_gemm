@@ -17,8 +17,8 @@ Warps are the fundamental (Atomic level) execution unit on NVIDIA GPUs:
 -	All threads in a warp execute the same instruction at the same time (SIMT: Single Instruction, Multiple Threads).
 - Each thread in the warp operates on its own registers and memory addresses.
 
-When a warp issues an instruction (memory or even arithemtic), the result might take multiple cycles to become available. Instead of waiting, the **warp scheduler** switches to another warp that is ready to run. 
-This latency hiding is how GPUs keep their execution units busy. Hopper SMs have 4 warp schedulers per SM.
+When a warp issues an instruction (memory or even arithemtic), the result might take multiple cycles to become available. Instead of waiting, the **warp scheduler** switches to another warp that is ready to run. This latency hiding is how GPUs keep their execution units busy. Hopper 
+SMs have 4 warp schedulers per SM.
 
 ## Warptiling
 
@@ -33,12 +33,16 @@ The warp is the fundamental execution unit in NVIDIA GPUs. By giving each warp i
 with the way the hardware actually schedules instructions.
 
   - Each warp can execute independently.
-  -  If one warp stalls on memory, others can continue executing, which keeps warp scheduler slots full and reduces idle cycles.
+  - If one warp stalls on memory, others can continue executing, which keeps warp scheduler slots full and reduces idle cycles.
   
 ### Control over shared memory access:
-   
-Shared memory bank conflicts only occur within a warp, not between them. By assigning each warp its own sub-tile and carefully planning
-how it accesses shared memory, we can, avoid bank conflicts without padding the entire block tile.
+
+Shared memory in each SM is divided into 32 banks, each 4 bytes wide. Every time a warp accesses shared memory, each thread gets mapped to one of these banks, based on the address (or word index) it wants.
+
+- Bank 0 holds all words whose indices are divisible by 32 (word 0, 32, 64, …).
+- Bank 1 holds words with index 1, 33, 65, … and so on.
+- The bank is determined by:
+   - bank_index = word_index % 32
 
 ### Improved register cache locality:
    
@@ -52,3 +56,4 @@ needed again soon, it can be served directly from this buffer instead of going b
 
 Warp tiling helps here because each warp works on a small, fixed sub‑tile of the output matrix, so it tends to reuse the same registers repeatedly 
 in the inner loop. This makes bank conflicts less likely and increases the chances that operands can be reused directly from the OCU buffer.
+
