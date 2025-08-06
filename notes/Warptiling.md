@@ -71,5 +71,6 @@ needed again soon, it can be served directly from this buffer instead of going b
 Warp tiling helps here because each warp works on a small, fixed sub‑tile of the output matrix, so it tends to reuse the same registers repeatedly 
 in the inner loop. This makes bank conflicts less likely and increases the chances that operands can be reused directly from the OCU buffer.
 
-
+Again this is a speculation, which for now Idk if it holds. Or perhaps even affect performance as much, since, access to registers is already extremely fast.
+ 
 
