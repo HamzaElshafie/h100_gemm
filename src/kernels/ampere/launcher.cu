@@ -117,7 +117,7 @@ namespace ampere {
 }
 
 namespace cublas {
-    void run_sgemm_cublas(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
+    void run_gemm_cublas(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
                            int M, int N, int K, float alpha, float beta, cublasHandle_t handle) {
     // Standard cuBLAS GEMM in full FP32 precision (no tensor cores, no mixed precision)
     CUBLAS_CHECK(cublasGemmEx(
@@ -135,24 +135,22 @@ namespace cublas {
 
     CUDA_CHECK(cudaDeviceSynchronize());
 }
-
-//     void run_sgemm_cublas(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
-//     int M, int N, int K, float alpha, float beta, cublasHandle_t handle) {
-
-//     const void* alpha_ptr = static_cast<const void*>(&alpha);
-//     const void* beta_ptr  = static_cast<const void*>(&beta);
-
-//     CUBLAS_CHECK(cublasGemmEx(
-//         handle,
-//         CUBLAS_OP_N, CUBLAS_OP_N,  // no transpose
-//         K, M, N,                   // cuBLAS uses column-major: compute C[K×M] = A[K×N] × B[N×M]
-//         alpha_ptr,
-//         B, CUDA_R_16F, K,         // B: (N x K), lda = K
-//         A, CUDA_R_16F, N,         // A: (M x N), lda = N
-//         beta_ptr,
-//         C, CUDA_R_32F, K,         // C: (M x K), ldc = K
-//         CUBLAS_COMPUTE_32F,
-//         CUBLAS_GEMM_DEFAULT_TENSOR_OP // Uses tensor cores
-//     ));
-// }
+    void run_gemm_cublas_bf16(const __nv_bfloat16* __restrict__ A,
+                            const __nv_bfloat16* __restrict__ B,
+                            __nv_bfloat16* __restrict__ C,
+                            int M, int N, int K, float alpha, float beta, cublasHandle_t handle) {
+        CUBLAS_CHECK(cublasGemmEx(
+            handle,
+            CUBLAS_OP_N, CUBLAS_OP_N,   // No transpose
+            K, M, N,                    // Note: cuBLAS is column-major: C[K x M] = B[K x N] × A[N x M]
+            &alpha,
+            B, CUDA_R_16BF, K,          // B: (N x K), lda = K
+            A, CUDA_R_16BF, N,          // A: (M x N), lda = N
+            &beta,
+            C, CUDA_R_16BF, K,          // C: (M x K), ldc = K (stays BF16)
+            CUBLAS_COMPUTE_32F,         // accumulate in FP32
+            CUBLAS_GEMM_DEFAULT_TENSOR_OP
+        ));
+        CUDA_CHECK(cudaDeviceSynchronize());
+    }
 }

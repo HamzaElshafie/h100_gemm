@@ -7,6 +7,8 @@
 #include <cstdio>
 #include <cmath>
 
+#define WARPSIZE 32
+
 template <const uint TILE_SIZE_M, const uint TILE_SIZE_N, const uint TILE_SIZE_K,
         const uint WARP_TILE_M, const uint WARP_TILE_K, const uint WARP_STEPS_K,
         const uint ROWS_PER_THREAD, const uint COLS_PER_THREAD, const uint NUM_THREADS,
