@@ -26,9 +26,10 @@ __global__ void __launch_bounds__(NUM_THREADS)
         const uint block_column = blockIdx.x;
 
         constexpr uint WARP_STEPS_M = (WARP_TILE_M * WARP_TILE_K) / (WARPSIZE * (ROWS_PER_THREAD * COLS_PER_THREAD)); // 1
+        // constexpr uint WARP_STEPS_M = WARP_TILE_M / ROWS_PER_THREAD; Try this
         // Warp subtile is WARP_SUB_M x WARP_SUB_K
-        constexpr uint WARP_SUB_M = WARP_TILE_M / WARP_STEPS_M;
-        constexpr uint WARP_SUB_K = WARP_TILE_K / WARP_STEPS_K;
+        constexpr uint WARP_SUB_M = WARP_TILE_M / WARP_STEPS_M; // 64 / 1 = 64
+        constexpr uint WARP_SUB_K = WARP_TILE_K / WARP_STEPS_K; // 64 / 4 = 16
 
         // Identify the warp tile position
         const uint warp_idx = threadIdx.x / WARPSIZE; // threads 0,..,31 --> warp_idx = 0,  threads 32,..,63 --> warp_idx = 1 etc
@@ -39,7 +40,7 @@ __global__ void __launch_bounds__(NUM_THREADS)
         // Identify the thread position within the warp tile
         uint lane = threadIdx.x % WARPSIZE;
         const uint threads_per_subtile_row = WARP_SUB_K / COLS_PER_THREAD; // 16/4 = 4 threads per row
-        const uint thread_row_in_sub = lane / threads_per_subtile_row; // Eg. 6/4 = 1.5 = 1. Row 1
+        const uint thread_row_in_sub = lane / threads_per_subtile_row; // Eg. 6/4 = 1.5 = 1. Row 1 
         const uint thread_col_in_sub = lane % threads_per_subtile_row; // Eg. 5%4 = 1. Col 1
 
         const uint ty = thread_row_in_sub;
@@ -64,7 +65,7 @@ __global__ void __launch_bounds__(NUM_THREADS)
         // If we give each thread a vector load of 4 elements along TILE_SIZE_K, how many different rows of sharedB can we cover in one pass through all the threads?
         const uint strideB = (NUM_THREADS * 4) / TILE_SIZE_K; // 4 rows per pass
 
-       float threadresults[WARP_STEPS_M * ROWS_PER_THREAD * WARP_STEPS_K + COLS_PER_THREAD] = {0.0f};
+       float thread_results[WARP_STEPS_M * ROWS_PER_THREAD * WARP_STEPS_K * COLS_PER_THREAD] = {0.0f};
        __nv_bfloat16 reg_m[WARP_STEPS_M * ROWS_PER_THREAD]; // In our case 1 x 8
        __nv_bfloat16 reg_k[WARP_STEPS_K * COLS_PER_THREAD]; // 4 x 4 = 16
 
@@ -105,7 +106,7 @@ __global__ void __launch_bounds__(NUM_THREADS)
                     const float2 va = reinterpret_cast<float2*>(
                         &sharedA[i * TILE_SIZE_M + base_row + row])[0];
                         
-                    _nv_bfloat16 t4[4];
+                    __nv_bfloat16 t4[4];
                     memcpy(&t4[0], &va, sizeof(__nv_bfloat16) * 4);
 
                     reg_m[wSubRow * ROWS_PER_THREAD + row + 0] = t4[0];
@@ -117,23 +118,99 @@ __global__ void __launch_bounds__(NUM_THREADS)
             for (int wSubCol = 0; wSubCol < WARP_STEPS_K; wSubCol++) {
                 uint col_base = (warp_col * WARP_TILE_K) + (wSubCol * WARP_SUB_K) + (tx * COLS_PER_THREAD);
 
+                // Each thread loads COLS_PER_THREAD into the register x 4 times in our case since WARP_STEPS_K = 4
                 #pragma unroll
                 for (int col = 0; col < COLS_PER_THREAD; col+=4) {
-                    const float2 vb = reinterpret_cast<float2*>(&sharedB[i * TILE_SIZE_K  + col_base + col])[0]
+                    const float2 vb = reinterpret_cast<float2*>(&sharedB[i * TILE_SIZE_K  + col_base + col])[0];
 
-                    _nv_bfloat16 t4[4];
+                    __nv_bfloat16 t4[4];
                     memcpy(&t4[0], &vb, sizeof(__nv_bfloat16) * 4);
 
                     reg_k[wSubCol * COLS_PER_THREAD + col + 0] = t4[0];
-                    reg_k[wSubCol * ROWS_PER_THREAD + col + 1] = t4[1];
-                    reg_k[wSubCol * ROWS_PER_THREAD + col + 2] = t4[2];
-                    reg_k[wSubCol * ROWS_PER_THREAD + col + 3] = t4[3];
+                    reg_k[wSubCol * COLS_PER_THREAD + col + 1] = t4[1];
+                    reg_k[wSubCol * COLS_PER_THREAD + col + 2] = t4[2];
+                    reg_k[wSubCol * COLS_PER_THREAD + col + 3] = t4[3];
+                }
+            }
+
+            // Compute outer product of ROWS_PER_THREAD & COLS_PER_THREAD producing (8 * 1) x (4 x 4) = 8 x 16
+            for (int wSubRow = 0; wSubRow < WARP_STEPS_M; wSubRow++) {
+                for (int wSubCol = 0; wSubCol < WARP_STEPS_K; wSubCol++) {
+                    #pragma unroll
+                    for (int im = 0; im < ROWS_PER_THREAD; im++) {
+                        // Fixate one value from reg_m
+                        float fixed_temp =  __bfloat162float(reg_m[wSubRow * ROWS_PER_THREAD + im]);
+                        #pragma unroll
+                        for (int ik = 0; ik < COLS_PER_THREAD; ik++) {
+                            float out = fixed_temp * __bfloat162float(reg_k[wSubCol * COLS_PER_THREAD + ik]);
+                            // Flatten (row, col) into thread_results
+                            // row_index   = wSubRow * ROWS_PER_THREAD + im
+                            // col_index   = wSubCol * COLS_PER_THREAD + ik
+                            // row_stride  = WARP_STEPS_K * COLS_PER_THREAD
+                            int out_idx = (wSubRow * ROWS_PER_THREAD + im) * (WARP_STEPS_K * COLS_PER_THREAD) + (wSubCol * COLS_PER_THREAD + ik);
+                            thread_results[out_idx] += out;
+                        }
+                    } 
                 }
             }
             }
         }
+        __syncthreads();
 
+        A += TILE_SIZE_N; // Move right
+        B += TILE_SIZE_N * K; // Move down     
+       }
 
+       // Write results of the thread back to C
+       for (int wSubRow = 0; wSubRow < WARP_STEPS_M; wSubRow++) {
+        for (int wSubCol = 0; wSubCol < WARP_STEPS_K; wSubCol++) {
+            // Move C's pointer to the start of warp subtile
+            C += (warp_row * WARP_TILE_M + wSubRow * WARP_SUB_M) * K + (warp_col * WARP_TILE_K + wSubCol * WARP_SUB_K);
 
+            #pragma unroll
+            for (int im = 0; im < ROWS_PER_THREAD; im++) {
+                // Calculate global row
+                int c_row = ty * ROWS_PER_THREAD + im; // Ex. ty(3). Row should be 3 * 8 + im
+                #pragma unroll
+                for (int ik = 0; ik < COLS_PER_THREAD; ik+=4) {
+                    int c_col = tx * COLS_PER_THREAD + ik; // Ex. tx(2). Row should be 2 * 4 + im
+
+                    uint idx_out = (wSubRow * ROWS_PER_THREAD + im) * (WARP_STEPS_K * COLS_PER_THREAD) + (wSubCol * COLS_PER_THREAD + ik);
+
+                    // Store in a temporary array results of the current chunk across COLS_PER_THREAD
+                    float temp_out[4];
+                    temp_out[0] = thread_results[idx_out + 0];
+                    temp_out[1] = thread_results[idx_out + 1];
+                    temp_out[2] = thread_results[idx_out + 2];
+                    temp_out[3] = thread_results[idx_out + 3];
+
+                    __nv_bfloat16 out[4];
+
+                    // One float2 packs four contiguous bf16 values from C
+                    float2 vc = reinterpret_cast<float2*>(&C[c_row * K + c_col])[0]; 
+
+                    // Reinterpret the 64 bits as four bf16 scalars
+                    __nv_bfloat16 tempC[4];
+                    memcpy(&tempC[0], &vc, sizeof(__nv_bfloat16) * 4);
+
+                    // Convert to fp32 for computation
+                    float tempC_fp32[4];
+                    tempC_fp32[0] = __bfloat162float(tempC[0]);
+                    tempC_fp32[1] = __bfloat162float(tempC[1]);
+                    tempC_fp32[2] = __bfloat162float(tempC[2]);
+                    tempC_fp32[3] = __bfloat162float(tempC[3]);
+
+                    // Compute & convert back to bf16
+                    out[0] = __float2bfloat16_rn(alpha * temp_out[0] + beta * tempC_fp32[0]);
+                    out[1] = __float2bfloat16_rn(alpha * temp_out[1] + beta * tempC_fp32[1]);
+                    out[2] = __float2bfloat16_rn(alpha * temp_out[2] + beta * tempC_fp32[2]);
+                    out[3] = __float2bfloat16_rn(alpha * temp_out[3] + beta * tempC_fp32[3]);
+
+                    float2 vo;
+                    memcpy(&vo, &out[0], sizeof(__nv_bfloat16) * 4);
+                    reinterpret_cast<float2*>(&C[c_row * K + c_col])[0] = vo;
+                }
+            }
+        }
        }
     }
