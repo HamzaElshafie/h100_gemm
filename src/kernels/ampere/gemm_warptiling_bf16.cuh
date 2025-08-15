@@ -11,15 +11,19 @@
 
 template <const uint TILE_SIZE_M, const uint TILE_SIZE_N, const uint TILE_SIZE_K,
         const uint WARP_TILE_M, const uint WARP_TILE_K, const uint WARP_STEPS_K,
-        const uint ROWS_PER_THREAD, const uint COLS_PER_THREAD, const uint NUM_THREADS,
-        bool PAD_SMEM_A = false, bool PAD_SMEM_B = false>
+        const uint ROWS_PER_THREAD, const uint COLS_PER_THREAD, const uint NUM_THREADS>
 __global__ void __launch_bounds__(NUM_THREADS) 
 gemm_warptiling_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
         int M, int N, int K, float alpha, float beta) {
 
-        // Allocate shared memory
-        __shared__ __nv_bfloat16 sharedA[TILE_SIZE_M * TILE_SIZE_N];
-        __shared__ __nv_bfloat16 sharedB[TILE_SIZE_N * TILE_SIZE_K];
+        // Allocate shared memory with padding to avoid bank conflicts while keeping float2 alignment
+        constexpr uint STRIDE_A = (TILE_SIZE_M % 32u == 0u) ? (TILE_SIZE_M + 4u) : TILE_SIZE_M;
+        constexpr uint STRIDE_B = (TILE_SIZE_K % 32u == 0u) ? (TILE_SIZE_K + 4u) : TILE_SIZE_K;
+        static_assert((STRIDE_A % 4u) == 0u, "STRIDE_A must keep float2 alignment");
+        static_assert((STRIDE_B % 4u) == 0u, "STRIDE_B must keep float2 alignment");
+
+        __shared__ __nv_bfloat16 sharedA[TILE_SIZE_N * STRIDE_A];
+        __shared__ __nv_bfloat16 sharedB[TILE_SIZE_N * STRIDE_B];
 
         // Identify the tile of C this thread block is responsible for
         const uint block_row = blockIdx.y;
@@ -162,43 +166,47 @@ gemm_warptiling_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* _
        }
 
        // Write results of the thread back to C
-       for (int wSubRow = 0; wSubRow < WARP_STEPS_M; wSubRow++) {
-        for (int wSubCol = 0; wSubCol < WARP_STEPS_K; wSubCol++) {
-            // Move C's pointer to the start of warp subtile
-            C += (warp_row * WARP_TILE_M + wSubRow * WARP_SUB_M) * K + (warp_col * WARP_TILE_K + wSubCol * WARP_SUB_K);
+        __nv_bfloat16* C_tile_base = C; // Keep base pointer
+        for (int wSubRow = 0; wSubRow < WARP_STEPS_M; wSubRow++) {
+            for (int wSubCol = 0; wSubCol < WARP_STEPS_K; wSubCol++) {
+            // Compute fresh pointer for each subtile
+            __nv_bfloat16* C_ptr = C_tile_base
+                + (warp_row * WARP_TILE_M + wSubRow * WARP_SUB_M) * K
+                + (warp_col * WARP_TILE_K + wSubCol * WARP_SUB_K);
 
             #pragma unroll
             for (int im = 0; im < ROWS_PER_THREAD; im++) {
-                // Calculate global row
-                int c_row = ty * ROWS_PER_THREAD + im; // Ex. ty(3). Row should be 3 * 8 + im
+                int c_row = ty * ROWS_PER_THREAD + im;
                 #pragma unroll
-                for (int ik = 0; ik < COLS_PER_THREAD; ik+=4) {
-                    int c_col = tx * COLS_PER_THREAD + ik; // Ex. tx(2). Row should be 2 * 4 + im
+                for (int ik = 0; ik < COLS_PER_THREAD; ik += 4) {
+                    int c_col = tx * COLS_PER_THREAD + ik;
 
-                    uint idx_out = (wSubRow * ROWS_PER_THREAD + im) * (WARP_STEPS_K * COLS_PER_THREAD) + (wSubCol * COLS_PER_THREAD + ik);
+                    uint idx_out = (wSubRow * ROWS_PER_THREAD + im) * (WARP_STEPS_K * COLS_PER_THREAD)
+                                + (wSubCol * COLS_PER_THREAD + ik);
 
-                    // Store in a temporary array results of the current chunk across COLS_PER_THREAD
-                    float temp_out[4];
-                    temp_out[0] = thread_results[idx_out + 0];
-                    temp_out[1] = thread_results[idx_out + 1];
-                    temp_out[2] = thread_results[idx_out + 2];
-                    temp_out[3] = thread_results[idx_out + 3];
+                    float temp_out[4] = {
+                        thread_results[idx_out + 0],
+                        thread_results[idx_out + 1],
+                        thread_results[idx_out + 2],
+                        thread_results[idx_out + 3]
+                    };
 
                     __nv_bfloat16 out[4];
 
                     // One float2 packs four contiguous bf16 values from C
-                    float2 vc = reinterpret_cast<float2*>(&C[c_row * K + c_col])[0]; 
+                    float2 vc = reinterpret_cast<float2*>(&C_ptr[c_row * K + c_col])[0];
 
                     // Reinterpret the 64 bits as four bf16 scalars
                     __nv_bfloat16 tempC[4];
                     memcpy(&tempC[0], &vc, sizeof(__nv_bfloat16) * 4);
 
                     // Convert to fp32 for computation
-                    float tempC_fp32[4];
-                    tempC_fp32[0] = __bfloat162float(tempC[0]);
-                    tempC_fp32[1] = __bfloat162float(tempC[1]);
-                    tempC_fp32[2] = __bfloat162float(tempC[2]);
-                    tempC_fp32[3] = __bfloat162float(tempC[3]);
+                    float tempC_fp32[4] = {
+                        __bfloat162float(tempC[0]),
+                        __bfloat162float(tempC[1]),
+                        __bfloat162float(tempC[2]),
+                        __bfloat162float(tempC[3])
+                    };
 
                     // Compute & convert back to bf16
                     out[0] = __float2bfloat16_rn(alpha * temp_out[0] + beta * tempC_fp32[0]);
@@ -208,11 +216,11 @@ gemm_warptiling_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* _
 
                     float2 vo;
                     memcpy(&vo, &out[0], sizeof(__nv_bfloat16) * 4);
-                    reinterpret_cast<float2*>(&C[c_row * K + c_col])[0] = vo;
+                    reinterpret_cast<float2*>(&C_ptr[c_row * K + c_col])[0] = vo;
                 }
             }
         }
-       }
     }
+}
 
 

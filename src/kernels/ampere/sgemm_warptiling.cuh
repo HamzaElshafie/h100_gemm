@@ -10,15 +10,19 @@
 
 template <const uint TILE_SIZE_M, const uint TILE_SIZE_N, const uint TILE_SIZE_K,
           const uint WARP_TILE_M, const uint WARP_TILE_K, const uint WARP_STEPS_K,
-          const uint ROWS_PER_THREAD, const uint COLS_PER_THREAD, const uint NUM_THREADS,
-          bool PAD_SMEM_A = false, bool PAD_SMEM_B = false>
+          const uint ROWS_PER_THREAD, const uint COLS_PER_THREAD, const uint NUM_THREADS>
 __global__ void __launch_bounds__(NUM_THREADS)
 sgemm_warptiling(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
                  int M, int N, int K, float alpha, float beta) {
 
-    // Allocate shared memory
-    __shared__ float sharedA[TILE_SIZE_M * TILE_SIZE_N];
-    __shared__ float sharedB[TILE_SIZE_N * TILE_SIZE_K];
+    // Allocate shared memory. Use padded leading strides that keep float4 alignment
+    constexpr uint STRIDE_A = (TILE_SIZE_M % 32u == 0u) ? (TILE_SIZE_M + 4u) : TILE_SIZE_M;
+    constexpr uint STRIDE_B = (TILE_SIZE_K % 32u == 0u) ? (TILE_SIZE_K + 4u) : TILE_SIZE_K;
+    static_assert((STRIDE_A % 4u) == 0u, "STRIDE_A must keep float4 alignment");
+    static_assert((STRIDE_B % 4u) == 0u, "STRIDE_B must keep float4 alignment");
+
+    __shared__ float sharedA[TILE_SIZE_N * STRIDE_A];
+    __shared__ float sharedB[TILE_SIZE_N * STRIDE_B];
 
     // Identify the tile of C this thread block is responsible for
     const uint block_row    = blockIdx.y;
@@ -77,16 +81,16 @@ sgemm_warptiling(const float* __restrict__ A, const float* __restrict__ B, float
                 &A[(smem_ty_A + load_offset) * N + smem_tx_A * 4])[0];
 
             // Transpose A (instead of 128x16 previously for ex, now it will be 16x128)
-            sharedA[(smem_tx_A * 4 + 0) * TILE_SIZE_M + (smem_ty_A + load_offset)] = v.x;
-            sharedA[(smem_tx_A * 4 + 1) * TILE_SIZE_M + (smem_ty_A + load_offset)] = v.y;
-            sharedA[(smem_tx_A * 4 + 2) * TILE_SIZE_M + (smem_ty_A + load_offset)] = v.z;
-            sharedA[(smem_tx_A * 4 + 3) * TILE_SIZE_M + (smem_ty_A + load_offset)] = v.w;
+            sharedA[(smem_tx_A * 4 + 0) * STRIDE_A + (smem_ty_A + load_offset)] = v.x;
+            sharedA[(smem_tx_A * 4 + 1) * STRIDE_A + (smem_ty_A + load_offset)] = v.y;
+            sharedA[(smem_tx_A * 4 + 2) * STRIDE_A + (smem_ty_A + load_offset)] = v.z;
+            sharedA[(smem_tx_A * 4 + 3) * STRIDE_A + (smem_ty_A + load_offset)] = v.w;
         }
 
         // Load from as B as well but without transposing
         for (int load_offset = 0; load_offset < TILE_SIZE_N; load_offset += strideB) {
             reinterpret_cast<float4*>(
-                &sharedB[(smem_ty_B + load_offset) * TILE_SIZE_K + smem_tx_B * 4])[0] =
+                &sharedB[(smem_ty_B + load_offset) * STRIDE_B + smem_tx_B * 4])[0] =
             reinterpret_cast<const float4*>(
                 &B[(smem_ty_B + load_offset) * K + smem_tx_B * 4])[0];
         }
@@ -103,7 +107,7 @@ sgemm_warptiling(const float* __restrict__ A, const float* __restrict__ B, float
                 #pragma unroll
                 for (int row = 0; row < ROWS_PER_THREAD; row += 4) {
                     const float4 va = reinterpret_cast<const float4*>(
-                        &sharedA[i * TILE_SIZE_M + base_row + row])[0];
+                        &sharedA[i * STRIDE_A + base_row + row])[0];
 
                     reg_m[wSubRow * ROWS_PER_THREAD + row + 0] = va.x;
                     reg_m[wSubRow * ROWS_PER_THREAD + row + 1] = va.y;
@@ -118,7 +122,7 @@ sgemm_warptiling(const float* __restrict__ A, const float* __restrict__ B, float
                     #pragma unroll
                     for (int col = 0; col < COLS_PER_THREAD; col += 4) {
                         const float4 vb = reinterpret_cast<const float4*>(
-                            &sharedB[i * TILE_SIZE_K + col_base + col])[0];
+                            &sharedB[i * STRIDE_B + col_base + col])[0];
 
                         reg_k[wSubCol * COLS_PER_THREAD + col + 0] = vb.x;
                         reg_k[wSubCol * COLS_PER_THREAD + col + 1] = vb.y;
@@ -188,5 +192,3 @@ sgemm_warptiling(const float* __restrict__ A, const float* __restrict__ B, float
         }
     }
 }
-
-
