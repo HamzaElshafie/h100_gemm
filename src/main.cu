@@ -21,7 +21,7 @@ void printUsage() {
               << "  ID:       0, 1, 2, ...\n" // TODO: Print last kernel number for each implementation
               << "  dtype:    fp32 | bf16\n"
               << "Example: ./gemm ampere 0 fp32\n"
-              << "(Note): For cuBLAS, use ID=0 for cuBLASLt implementation. ./gemm cublas 0 fp32\n";
+              << "(Note): For cuBLAS, use ID=0. Example: ./gemm cublas 0 fp32\n";
 }
 
 /**

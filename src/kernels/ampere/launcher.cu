@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
+#include <cuda_bf16.h>
 #include <cmath>
 
 #include "utils.h"
@@ -17,6 +18,14 @@
 #include "sgemm_1D_registertiling.cuh"
 #include "sgemm_2D_registertiling.cuh"
 #include "sgemm_vectorised.cuh"
+#include "gemm_naive_bf16.cuh"
+#include "gemm_coalesced_bf16.cuh"
+#include "gemm_tiled_shared_bf16.cuh"
+#include "gemm_1D_registertiling_bf16.cuh"
+#include "gemm_2D_registertiling_bf16.cuh"
+#include "gemm_vectorised_bf16.cuh"
+#include "sgemm_warptiling.cuh"
+#include "gemm_warptiling_bf16.cuh"
 
 namespace ampere {
     /**
@@ -113,6 +122,127 @@ namespace ampere {
         <<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
+    }
+
+    void run_gemm_naive_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C, 
+        int M, int N, int K, float alpha, float beta) {
+        dim3 gridDim(CEIL_DIV(K, 32), CEIL_DIV(M, 32));
+        dim3 blockDim(32, 32);
+        gemm_naive_bf16<<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
+        CUDA_CHECK(cudaGetLastError());
+        CUDA_CHECK(cudaDeviceSynchronize());
+    }
+
+    void run_gemm_coalesced_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
+        int M, int N, int K, float alpha, float beta) {
+        dim3 gridDim(CEIL_DIV(K, 32), CEIL_DIV(M, 32));
+        dim3 blockDim(32*32);
+        gemm_coalesced_bf16<32><<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
+        CUDA_CHECK(cudaGetLastError());
+        CUDA_CHECK(cudaDeviceSynchronize());
+    }
+
+    void run_gemm_tiled_shared_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
+        int M, int N, int K, float alpha, float beta) {
+        dim3 gridDim(CEIL_DIV(K, 32), CEIL_DIV(M, 32));
+        dim3 blockDim(32*32);
+        gemm_tiled_shared_bf16<32><<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
+        CUDA_CHECK(cudaGetLastError());
+        CUDA_CHECK(cudaDeviceSynchronize());
+    }
+
+    void run_gemm_1D_registertiling_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
+        int M, int N, int K, float alpha, float beta) {
+        const uint TILE_SIZE_M = 64;
+        const uint TILE_SIZE_K = 64;
+        const uint TILE_SIZE_N = 8;
+        const uint ROWS_PER_THREAD = 8;
+        dim3 gridDim(CEIL_DIV(K, TILE_SIZE_K), CEIL_DIV(M, TILE_SIZE_M));
+        dim3 blockDim((TILE_SIZE_M * TILE_SIZE_K) / ROWS_PER_THREAD);
+        gemm_1D_registertiling_bf16<TILE_SIZE_M, TILE_SIZE_N, TILE_SIZE_K, ROWS_PER_THREAD>
+            <<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
+        CUDA_CHECK(cudaGetLastError());
+        CUDA_CHECK(cudaDeviceSynchronize());
+    }
+
+    void run_gemm_2D_registertiling_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
+        int M, int N, int K, float alpha, float beta) {
+        const uint TILE_SIZE_N = 8;
+        const uint ROWS_PER_THREAD = 8;
+        const uint COLS_PER_THREAD = 8;
+        const uint TILE_SIZE_M = 128;
+        const uint TILE_SIZE_K = 128;
+        dim3 gridDim(CEIL_DIV(K, TILE_SIZE_K), CEIL_DIV(M, TILE_SIZE_M));
+        dim3 blockDim((TILE_SIZE_M * TILE_SIZE_K) / (ROWS_PER_THREAD * COLS_PER_THREAD));
+        gemm_2D_registertiling_bf16<TILE_SIZE_M, TILE_SIZE_N, TILE_SIZE_K, ROWS_PER_THREAD, COLS_PER_THREAD>
+            <<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
+        CUDA_CHECK(cudaGetLastError());
+        CUDA_CHECK(cudaDeviceSynchronize());
+    }
+
+    void run_gemm_vectorised_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
+        int M, int N, int K, float alpha, float beta) {
+        const uint TILE_SIZE_N = 8;
+        const uint ROWS_PER_THREAD = 8;
+        const uint COLS_PER_THREAD = 8;
+        const uint TILE_SIZE_M = 128;
+        const uint TILE_SIZE_K = 128;
+        dim3 gridDim(CEIL_DIV(K, TILE_SIZE_K), CEIL_DIV(M, TILE_SIZE_M));
+        dim3 blockDim((TILE_SIZE_M * TILE_SIZE_K) / (ROWS_PER_THREAD * COLS_PER_THREAD));
+        gemm_vectorised_bf16<TILE_SIZE_M, TILE_SIZE_N, TILE_SIZE_K, ROWS_PER_THREAD, COLS_PER_THREAD>
+            <<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
+        CUDA_CHECK(cudaGetLastError());
+        CUDA_CHECK(cudaDeviceSynchronize());
+    }
+
+    void run_sgemm_warptiling(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
+        int M, int N, int K, float alpha, float beta) {
+        constexpr int TILE_SIZE_M = 128;
+        constexpr int TILE_SIZE_N = 16;
+        constexpr int TILE_SIZE_K = 128;
+        constexpr int WARP_TILE_M = 64;
+        constexpr int WARP_TILE_K = 64;
+        constexpr int ROWS_PER_THREAD = 8;
+        constexpr int COLS_PER_THREAD = 4;
+        constexpr int WARP_STEPS_K = 4;
+        constexpr int NUM_THREADS = 128;
+
+        dim3 blockDim(NUM_THREADS);
+        dim3 gridDim(CEIL_DIV(K, TILE_SIZE_K), CEIL_DIV(M, TILE_SIZE_M));
+
+        sgemm_warptiling<
+            TILE_SIZE_M, TILE_SIZE_N, TILE_SIZE_K,
+            WARP_TILE_M, WARP_TILE_K, WARP_STEPS_K,
+            ROWS_PER_THREAD, COLS_PER_THREAD, NUM_THREADS>
+            <<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
+
+        CUDA_CHECK(cudaGetLastError());
+        CUDA_CHECK(cudaDeviceSynchronize());
+    }
+
+    void run_gemm_warptiling_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
+        int M, int N, int K, float alpha, float beta) {
+        constexpr int TILE_SIZE_M = 128;
+        constexpr int TILE_SIZE_N = 16;
+        constexpr int TILE_SIZE_K = 128;
+        constexpr int WARP_TILE_M = 64;
+        constexpr int WARP_TILE_K = 64;
+        constexpr int ROWS_PER_THREAD = 8;
+        constexpr int COLS_PER_THREAD = 4;
+        constexpr int WARP_STEPS_K = 4;
+        constexpr int NUM_THREADS = 128;
+
+        dim3 blockDim(NUM_THREADS);
+        dim3 gridDim(CEIL_DIV(K, TILE_SIZE_K), CEIL_DIV(M, TILE_SIZE_M));
+
+        gemm_warptiling_bf16<
+            TILE_SIZE_M, TILE_SIZE_N, TILE_SIZE_K,
+            WARP_TILE_M, WARP_TILE_K, WARP_STEPS_K,
+            ROWS_PER_THREAD, COLS_PER_THREAD, NUM_THREADS>
+            <<<gridDim, blockDim>>>(A, B, C, M, N, K, alpha, beta);
+
+        CUDA_CHECK(cudaGetLastError());
+        CUDA_CHECK(cudaDeviceSynchronize());
     }
 }
 

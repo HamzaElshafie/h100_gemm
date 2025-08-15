@@ -32,7 +32,16 @@ enum class AmpereKernelVariant {
     sgemm_tiled_shared = 2,
     sgemm_1D_registertiling = 3,
     sgemm_2D_registertiling = 4,
-    sgemm_vectorised = 5
+    sgemm_vectorised = 5,
+    sgemm_warptiling = 6,
+    // Aliases so the same ID can be used regardless of dtype choice (fp32 or bf16)
+    gemm_naive_bf16 = naive_sgemm,
+    gemm_coalesced_bf16 = coalesced_sgemm,
+    gemm_tiled_shared_bf16 = sgemm_tiled_shared,
+    gemm_1D_registertiling_bf16 = sgemm_1D_registertiling,
+    gemm_2D_registertiling_bf16 = sgemm_2D_registertiling,
+    gemm_vectorised_bf16 = sgemm_vectorised,
+    gemm_warptiling_bf16 = sgemm_warptiling
 };
 
 /**
@@ -94,21 +103,16 @@ void launchKernel(const KernelConfig& config,
                     case AmpereKernelVariant::sgemm_vectorised:
                         ampere::run_sgemm_vectorised(A, B, C, M, N, K, alpha, beta);
                         break;
+                    case AmpereKernelVariant::sgemm_warptiling:
+                        ampere::run_sgemm_warptiling(A, B, C, M, N, K, alpha, beta);
+                        break;
                     default:
                         throw std::invalid_argument("Unknown Ampere kernel ID");
                 }
                 break;
 
             case KernelType::HOPPER:
-                // Same variant ID, float path calls the fp32 warp-tiling kernel
-                switch (static_cast<HopperKernelVariant>(config.kernel_id)) {
-                    case HopperKernelVariant::gemm_warptiling:
-                        hopper::run_gemm_warptiling_fp32(A, B, C, M, N, K, alpha, beta);
-                        break;
-                    default:
-                        throw std::invalid_argument("Unknown Hopper kernel ID");
-                }
-                break;
+                throw std::invalid_argument("No generic Hopper-only kernels here; use CUBLAS or Ampere path for architecture-agnostic kernels");
 
             case KernelType::CUBLAS:
                 cublas::run_gemm_cublas(A, B, C, M, N, K, alpha, beta, handle);
@@ -118,22 +122,39 @@ void launchKernel(const KernelConfig& config,
     } else if constexpr (std::is_same_v<T, __nv_bfloat16>) {
         switch (config.type) {
             case KernelType::HOPPER:
-                // Same variant ID, bf16 path calls the bf16 warp-tiling kernel
-                switch (static_cast<HopperKernelVariant>(config.kernel_id)) {
-                    case HopperKernelVariant::gemm_warptiling:
-                        hopper::run_gemm_warptiling_bf16(A, B, C, M, N, K, alpha, beta);
-                        break;
-                    default:
-                        throw std::invalid_argument("Unknown Hopper kernel ID");
-                }
-                break;
+                throw std::invalid_argument("No generic Hopper-only kernels here; use CUBLAS or Ampere path for architecture-agnostic kernels");
 
             case KernelType::CUBLAS:
                 cublas::run_gemm_cublas_bf16(A, B, C, M, N, K, alpha, beta, handle);
                 break;
 
             case KernelType::AMPERE:
-                throw std::invalid_argument("Ampere kernels require float");
+                // Same variant ID, bf16 path calls the bf16 kernels
+                switch (static_cast<AmpereKernelVariant>(config.kernel_id)) {
+                    case AmpereKernelVariant::naive_sgemm:
+                        ampere::run_gemm_naive_bf16(A, B, C, M, N, K, alpha, beta);
+                        break;
+                    case AmpereKernelVariant::coalesced_sgemm:
+                        ampere::run_gemm_coalesced_bf16(A, B, C, M, N, K, alpha, beta);
+                        break;
+                    case AmpereKernelVariant::sgemm_tiled_shared:
+                        ampere::run_gemm_tiled_shared_bf16(A, B, C, M, N, K, alpha, beta);
+                        break;
+                    case AmpereKernelVariant::sgemm_1D_registertiling:
+                        ampere::run_gemm_1D_registertiling_bf16(A, B, C, M, N, K, alpha, beta);
+                        break;
+                    case AmpereKernelVariant::sgemm_2D_registertiling:
+                        ampere::run_gemm_2D_registertiling_bf16(A, B, C, M, N, K, alpha, beta);
+                        break;
+                    case AmpereKernelVariant::sgemm_vectorised:
+                        ampere::run_gemm_vectorised_bf16(A, B, C, M, N, K, alpha, beta);
+                        break;
+                    case AmpereKernelVariant::sgemm_warptiling:
+                        ampere::run_gemm_warptiling_bf16(A, B, C, M, N, K, alpha, beta);
+                        break;
+                    default:
+                        throw std::invalid_argument("Unknown Ampere kernel ID");
+                }
         }
     } else {
         static_assert(always_false<T>::value, "Unsupported element type for launchKernel");

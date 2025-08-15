@@ -14,7 +14,7 @@ template <const uint TILE_SIZE_M, const uint TILE_SIZE_N, const uint TILE_SIZE_K
         const uint ROWS_PER_THREAD, const uint COLS_PER_THREAD, const uint NUM_THREADS,
         bool PAD_SMEM_A = false, bool PAD_SMEM_B = false>
 __global__ void __launch_bounds__(NUM_THREADS) 
-    gemm_warptiling_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
+gemm_warptiling_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
         int M, int N, int K, float alpha, float beta) {
 
         // Allocate shared memory
@@ -67,7 +67,7 @@ __global__ void __launch_bounds__(NUM_THREADS)
 
        float thread_results[WARP_STEPS_M * ROWS_PER_THREAD * WARP_STEPS_K * COLS_PER_THREAD] = {0.0f};
        __nv_bfloat16 reg_m[WARP_STEPS_M * ROWS_PER_THREAD]; // In our case 1 x 8
-       __nv_bfloat16 reg_k[WARP_STEPS_K * COLS_PER_THREAD]; // 4 x 4 = 16
+        __nv_bfloat16 reg_k[WARP_STEPS_K * COLS_PER_THREAD]; // 4 x 4 = 16
 
        const uint num_tiles = CEIL_DIV(N, TILE_SIZE_N);
 
@@ -214,3 +214,5 @@ __global__ void __launch_bounds__(NUM_THREADS)
         }
        }
     }
+
+

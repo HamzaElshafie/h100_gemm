@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <cuda_runtime.h>
+#include <cuda_bf16.h>
 #include <cublas_v2.h>
 #include <cublasLt.h>
 
@@ -22,6 +23,30 @@ namespace ampere {
         int M, int N, int K, float alpha, float beta);
 
     void run_sgemm_vectorised(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
+        int M, int N, int K, float alpha, float beta);
+
+    void run_sgemm_warptiling(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C,
+        int M, int N, int K, float alpha, float beta);
+        
+    void run_gemm_warptiling_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
+        int M, int N, int K, float alpha, float beta);
+
+    void run_gemm_naive_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
+        int M, int N, int K, float alpha, float beta);
+
+    void run_gemm_coalesced_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
+        int M, int N, int K, float alpha, float beta);
+
+    void run_gemm_tiled_shared_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
+        int M, int N, int K, float alpha, float beta);
+
+    void run_gemm_1D_registertiling_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
+        int M, int N, int K, float alpha, float beta);
+
+    void run_gemm_2D_registertiling_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
+        int M, int N, int K, float alpha, float beta);
+
+    void run_gemm_vectorised_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
         int M, int N, int K, float alpha, float beta);
 }
 
