@@ -17,8 +17,6 @@ __global__ void __launch_bounds__(NUM_THREADS)
     gemm_warptiling_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B, __nv_bfloat16* __restrict__ C,
         int M, int N, int K, float alpha, float beta) {
 
-        static_assert(TILE_SIZE_K % WARP_TILE_K == 0, "TILE_SIZE_K must tile by WARP_TILE_K");
-
         // Allocate shared memory
         __shared__ __nv_bfloat16 sharedA[TILE_SIZE_M * TILE_SIZE_N];
         __shared__ __nv_bfloat16 sharedB[TILE_SIZE_N * TILE_SIZE_K];
@@ -27,7 +25,7 @@ __global__ void __launch_bounds__(NUM_THREADS)
         const uint block_row = blockIdx.y;
         const uint block_column = blockIdx.x;
 
-        constexpr uint WARP_STEPS_M = (WARP_TILE_M * WARP_TILE_K) / (WARPSIZE * (ROWS_PER_THREAD * COLS_PER_THREAD)); // 1
+        constexpr uint WARP_STEPS_M = (WARP_TILE_M * WARP_TILE_K) / (WARPSIZE * ROWS_PER_THREAD * COLS_PER_THREAD * WARP_STEPS_K); // 1
         // constexpr uint WARP_STEPS_M = WARP_TILE_M / ROWS_PER_THREAD; Try this
         // Warp subtile is WARP_SUB_M x WARP_SUB_K
         constexpr uint WARP_SUB_M = WARP_TILE_M / WARP_STEPS_M; // 64 / 1 = 64

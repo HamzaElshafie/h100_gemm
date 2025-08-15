@@ -39,7 +39,8 @@ enum class AmpereKernelVariant {
  * @brief Hopper kernel variants (to be defined).
  */
 enum class HopperKernelVariant {
-    gemm_warptiling_bf16 = 0
+    gemm_warptiling_bf16 = 0,
+    gemm_warptiling = gemm_warptiling_bf16  // Alias so the same ID can be used regardless of dtype choice (fp32 or bf16)
 };
 
 /**
@@ -60,9 +61,16 @@ struct KernelConfig {
 template <typename>
 struct always_false : std::false_type {};
 
+/**
+ * @brief Launches the selected kernel based on the provided configuration.
+ *
+ * Template dispatches on element type T (float or __nv_bfloat16) so that the same
+ * Hopper variant ID can be used for both fp32 and bf16 runs.
+ */
 template <typename T>
-void launchKernel(const KernelConfig& config, const T* __restrict__ A, const T* __restrict__ B, T* __restrict__ C, 
-    int M, int N, int K, float alpha, float beta, cublasHandle_t handle) {
+void launchKernel(const KernelConfig& config,
+                  const T* __restrict__ A, const T* __restrict__ B, T* __restrict__ C, 
+                  int M, int N, int K, float alpha, float beta, cublasHandle_t handle) {
 
     if constexpr (std::is_same_v<T, float>) {
         switch (config.type) {
@@ -90,26 +98,40 @@ void launchKernel(const KernelConfig& config, const T* __restrict__ A, const T* 
                         throw std::invalid_argument("Unknown Ampere kernel ID");
                 }
                 break;
-            case KernelType::CUBLAS:
-                cublas::run_gemm_cublas(A, B, C, M, N, K, alpha, beta, handle);
-                break;
+
             case KernelType::HOPPER:
-                throw std::invalid_argument("Hopper kernels require __nv_bfloat16");
-        }
-    } else if constexpr (std::is_same_v<T, __nv_bfloat16>) {
-        switch (config.type) {
-            case KernelType::HOPPER:
+                // Same variant ID, float path calls the fp32 warp-tiling kernel
                 switch (static_cast<HopperKernelVariant>(config.kernel_id)) {
-                    case HopperKernelVariant::gemm_warptiling_bf16:
-                        hopper::run_gemm_warp_tiling_bf16(A, B, C, M, N, K, alpha, beta);
+                    case HopperKernelVariant::gemm_warptiling:
+                        hopper::run_gemm_warptiling_fp32(A, B, C, M, N, K, alpha, beta);
                         break;
                     default:
                         throw std::invalid_argument("Unknown Hopper kernel ID");
                 }
                 break;
+
+            case KernelType::CUBLAS:
+                cublas::run_gemm_cublas(A, B, C, M, N, K, alpha, beta, handle);
+                break;
+        }
+
+    } else if constexpr (std::is_same_v<T, __nv_bfloat16>) {
+        switch (config.type) {
+            case KernelType::HOPPER:
+                // Same variant ID, bf16 path calls the bf16 warp-tiling kernel
+                switch (static_cast<HopperKernelVariant>(config.kernel_id)) {
+                    case HopperKernelVariant::gemm_warptiling:
+                        hopper::run_gemm_warptiling_bf16(A, B, C, M, N, K, alpha, beta);
+                        break;
+                    default:
+                        throw std::invalid_argument("Unknown Hopper kernel ID");
+                }
+                break;
+
             case KernelType::CUBLAS:
                 cublas::run_gemm_cublas_bf16(A, B, C, M, N, K, alpha, beta, handle);
                 break;
+
             case KernelType::AMPERE:
                 throw std::invalid_argument("Ampere kernels require float");
         }
