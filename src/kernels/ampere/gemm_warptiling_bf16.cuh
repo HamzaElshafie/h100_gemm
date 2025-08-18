@@ -71,7 +71,7 @@ gemm_warptiling_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* _
 
        float thread_results[WARP_STEPS_M * ROWS_PER_THREAD * WARP_STEPS_K * COLS_PER_THREAD] = {0.0f};
        __nv_bfloat16 reg_m[WARP_STEPS_M * ROWS_PER_THREAD]; // In our case 1 x 8
-        __nv_bfloat16 reg_k[WARP_STEPS_K * COLS_PER_THREAD]; // 4 x 4 = 16
+       __nv_bfloat16 reg_k[WARP_STEPS_K * COLS_PER_THREAD]; // 4 x 4 = 16
 
        const uint num_tiles = CEIL_DIV(N, TILE_SIZE_N);
 
@@ -99,64 +99,86 @@ gemm_warptiling_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* _
         __syncthreads();
 
         // Iterate over the shared dimension of the SMEM tiles
-        for (int i = 0; i < TILE_SIZE_N; i++) {
+        for (int i = 0; i < TILE_SIZE_N; i++)
+        {
             // Load slice at current i iteration in sharedA's register
-            for (int wSubRow = 0; wSubRow < WARP_STEPS_M; wSubRow++) {
+            for (int wSubRow = 0; wSubRow < WARP_STEPS_M; wSubRow++)
+            {
                 uint base_row = (warp_row * WARP_TILE_M) + (wSubRow * WARP_SUB_M) + (ty * ROWS_PER_THREAD);
 
                 // Each thread loads ROWS_PER_THREAD into the register
-                #pragma unroll
-                for (int row = 0; row < ROWS_PER_THREAD; row+=4) {
-                    const float2 va = reinterpret_cast<float2*>(
-                        &sharedA[i * TILE_SIZE_M + base_row + row])[0];
-                        
-                    __nv_bfloat16 t4[4];
-                    memcpy(&t4[0], &va, sizeof(__nv_bfloat16) * 4);
-
-                    reg_m[wSubRow * ROWS_PER_THREAD + row + 0] = t4[0];
-                    reg_m[wSubRow * ROWS_PER_THREAD + row + 1] = t4[1];
-                    reg_m[wSubRow * ROWS_PER_THREAD + row + 2] = t4[2];
-                    reg_m[wSubRow * ROWS_PER_THREAD + row + 3] = t4[3];
-                }
-
-            for (int wSubCol = 0; wSubCol < WARP_STEPS_K; wSubCol++) {
-                uint col_base = (warp_col * WARP_TILE_K) + (wSubCol * WARP_SUB_K) + (tx * COLS_PER_THREAD);
-
-                // Each thread loads COLS_PER_THREAD into the register x 4 times in our case since WARP_STEPS_K = 4
-                #pragma unroll
-                for (int col = 0; col < COLS_PER_THREAD; col+=4) {
-                    const float2 vb = reinterpret_cast<float2*>(&sharedB[i * TILE_SIZE_K  + col_base + col])[0];
-
-                    __nv_bfloat16 t4[4];
-                    memcpy(&t4[0], &vb, sizeof(__nv_bfloat16) * 4);
-
-                    reg_k[wSubCol * COLS_PER_THREAD + col + 0] = t4[0];
-                    reg_k[wSubCol * COLS_PER_THREAD + col + 1] = t4[1];
-                    reg_k[wSubCol * COLS_PER_THREAD + col + 2] = t4[2];
-                    reg_k[wSubCol * COLS_PER_THREAD + col + 3] = t4[3];
-                }
-            }
-
-            // Compute outer product of ROWS_PER_THREAD & COLS_PER_THREAD producing (8 * 1) x (4 x 4) = 8 x 16
-            for (int wSubRow = 0; wSubRow < WARP_STEPS_M; wSubRow++) {
-                for (int wSubCol = 0; wSubCol < WARP_STEPS_K; wSubCol++) {
+                // Only row leaders load; others will receive via shuffle
+                const bool is_row_leader = (tx == 0);
+                if (is_row_leader)
+                {
                     #pragma unroll
-                    for (int im = 0; im < ROWS_PER_THREAD; im++) {
-                        // Fixate one value from reg_m
-                        float fixed_temp =  __bfloat162float(reg_m[wSubRow * ROWS_PER_THREAD + im]);
+                    for (int row = 0; row < ROWS_PER_THREAD; row += 4)
+                    {
+                        const float2 va = reinterpret_cast<float2 *>(
+                            &sharedA[i * TILE_SIZE_M + base_row + row])[0];
+
+                        __nv_bfloat16 t4[4];
+                        memcpy(&t4[0], &va, sizeof(__nv_bfloat16) * 4);
+
+                        reg_m[wSubRow * ROWS_PER_THREAD + row + 0] = t4[0];
+                        reg_m[wSubRow * ROWS_PER_THREAD + row + 1] = t4[1];
+                        reg_m[wSubRow * ROWS_PER_THREAD + row + 2] = t4[2];
+                        reg_m[wSubRow * ROWS_PER_THREAD + row + 3] = t4[3];
+                    }
+                }
+
+                for (int wSubCol = 0; wSubCol < WARP_STEPS_K; wSubCol++)
+                {
+                    uint col_base = (warp_col * WARP_TILE_K) + (wSubCol * WARP_SUB_K) + (tx * COLS_PER_THREAD);
+
+                    // Each thread loads COLS_PER_THREAD into the register x 4 times in our case since WARP_STEPS_K = 4
+                    // Only column leaders load; others will receive via shuffle
+                    const bool is_col_leader = (ty == 0);
+                    if (is_col_leader)
+                    {
                         #pragma unroll
-                        for (int ik = 0; ik < COLS_PER_THREAD; ik++) {
-                            float out = fixed_temp * __bfloat162float(reg_k[wSubCol * COLS_PER_THREAD + ik]);
+                        for (int col = 0; col < COLS_PER_THREAD; col += 4)
+                        {
+                            const float2 vb = reinterpret_cast<float2 *>(&sharedB[i * TILE_SIZE_K + col_base + col])[0];
+
+                            __nv_bfloat16 t4[4];
+                            memcpy(&t4[0], &vb, sizeof(__nv_bfloat16) * 4);
+
+                            reg_k[wSubCol * COLS_PER_THREAD + col + 0] = t4[0];
+                            reg_k[wSubCol * COLS_PER_THREAD + col + 1] = t4[1];
+                            reg_k[wSubCol * COLS_PER_THREAD + col + 2] = t4[2];
+                            reg_k[wSubCol * COLS_PER_THREAD + col + 3] = t4[3];
+                        }
+                    }
+
+                    // Compute outer product of ROWS_PER_THREAD & COLS_PER_THREAD producing (8 * 1) x (4 x 4) = 8 x 16
+                    // Use shuffles: leaders provide sources, everyone consumes the broadcast values
+                    const unsigned mask = __activemask();
+                    const uint row_leader_lane = ty * threads_per_subtile_row + 0;
+                    const uint col_leader_lane = 0 * threads_per_subtile_row + tx;
+
+                    #pragma unroll
+                    for (int im = 0; im < ROWS_PER_THREAD; im++)
+                    {
+                        // Fixate one value from reg_m
+                        float a_src = is_row_leader ? __bfloat162float(reg_m[wSubRow * ROWS_PER_THREAD + im]) : 0.0f;
+                        float a_val = __shfl_sync(mask, a_src, static_cast<int>(row_leader_lane));
+
+                        #pragma unroll
+                        for (int ik = 0; ik < COLS_PER_THREAD; ik++)
+                        {
+                            float b_src = is_col_leader ? __bfloat162float(reg_k[wSubCol * COLS_PER_THREAD + ik]) : 0.0f;
+                            float b_val = __shfl_sync(mask, b_src, static_cast<int>(col_leader_lane));
+
                             // Flatten (row, col) into thread_results
                             // row_index   = wSubRow * ROWS_PER_THREAD + im
                             // col_index   = wSubCol * COLS_PER_THREAD + ik
                             // row_stride  = WARP_STEPS_K * COLS_PER_THREAD
                             int out_idx = (wSubRow * ROWS_PER_THREAD + im) * (WARP_STEPS_K * COLS_PER_THREAD) + (wSubCol * COLS_PER_THREAD + ik);
-                            thread_results[out_idx] += out;
+                            thread_results[out_idx] += a_val * b_val;
                         }
-                    } 
+                    }
                 }
-            }
             }
         }
         __syncthreads();
@@ -222,5 +244,3 @@ gemm_warptiling_bf16(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* _
         }
     }
 }
-
-

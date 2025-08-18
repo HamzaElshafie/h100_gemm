@@ -25,7 +25,7 @@ sgemm_warptiling(const float* __restrict__ A, const float* __restrict__ B, float
     __shared__ float sharedB[TILE_SIZE_N * STRIDE_B];
 
     // Identify the tile of C this thread block is responsible for
-    const uint block_row    = blockIdx.y;
+    const uint block_row = blockIdx.y;
     const uint block_column = blockIdx.x;
 
     constexpr uint WARP_STEPS_M = (WARP_TILE_M * WARP_TILE_K) / (WARPSIZE * ROWS_PER_THREAD * COLS_PER_THREAD * WARP_STEPS_K);
@@ -34,16 +34,16 @@ sgemm_warptiling(const float* __restrict__ A, const float* __restrict__ B, float
     constexpr uint WARP_SUB_K = WARP_TILE_K / WARP_STEPS_K; // 64 / 4 = 16
 
     // Identify the warp tile position
-    const uint warp_idx      = threadIdx.x / WARPSIZE;
+    const uint warp_idx = threadIdx.x / WARPSIZE;
     const uint warps_per_row = TILE_SIZE_K / WARP_TILE_K;
-    const uint warp_row      = warp_idx / warps_per_row;
-    const uint warp_col      = warp_idx % warps_per_row;
+    const uint warp_row = warp_idx / warps_per_row;
+    const uint warp_col = warp_idx % warps_per_row;
 
     // Identify the thread position within the warp tile
     uint lane = threadIdx.x % WARPSIZE;
     const uint threads_per_subtile_row = WARP_SUB_K / COLS_PER_THREAD; // 16/4 = 4 threads per row
-    const uint thread_row_in_sub       = lane / threads_per_subtile_row;
-    const uint thread_col_in_sub       = lane % threads_per_subtile_row;
+    const uint thread_row_in_sub = lane / threads_per_subtile_row;
+    const uint thread_col_in_sub = lane % threads_per_subtile_row;
 
     const uint ty = thread_row_in_sub;
     const uint tx = thread_col_in_sub;
@@ -103,50 +103,55 @@ sgemm_warptiling(const float* __restrict__ A, const float* __restrict__ B, float
             for (int wSubRow = 0; wSubRow < WARP_STEPS_M; wSubRow++) {
                 uint base_row = (warp_row * WARP_TILE_M) + (wSubRow * WARP_SUB_M) + (ty * ROWS_PER_THREAD);
 
-                // Each thread loads ROWS_PER_THREAD into the register
-                #pragma unroll
-                for (int row = 0; row < ROWS_PER_THREAD; row += 4) {
-                    const float4 va = reinterpret_cast<const float4*>(
-                        &sharedA[i * STRIDE_A + base_row + row])[0];
+                // Each row "leader" load from sharedA, others will receive via shuffle
+                const bool is_row_leader = (tx == 0);
+                if (is_row_leader) {
+                    #pragma unroll
+                    for (int row = 0; row < ROWS_PER_THREAD; row += 4) {
+                        const float4 va = reinterpret_cast<const float4*>(
+                            &sharedA[i * STRIDE_A + base_row + row])[0];
 
-                    reg_m[wSubRow * ROWS_PER_THREAD + row + 0] = va.x;
-                    reg_m[wSubRow * ROWS_PER_THREAD + row + 1] = va.y;
-                    reg_m[wSubRow * ROWS_PER_THREAD + row + 2] = va.z;
-                    reg_m[wSubRow * ROWS_PER_THREAD + row + 3] = va.w;
+                        reg_m[wSubRow * ROWS_PER_THREAD + row + 0] = va.x;
+                        reg_m[wSubRow * ROWS_PER_THREAD + row + 1] = va.y;
+                        reg_m[wSubRow * ROWS_PER_THREAD + row + 2] = va.z;
+                        reg_m[wSubRow * ROWS_PER_THREAD + row + 3] = va.w;
+                    }
                 }
 
                 for (int wSubCol = 0; wSubCol < WARP_STEPS_K; wSubCol++) {
                     uint col_base = (warp_col * WARP_TILE_K) + (wSubCol * WARP_SUB_K) + (tx * COLS_PER_THREAD);
 
-                    // Each thread loads COLS_PER_THREAD into the register x 4 times in our case since WARP_STEPS_K = 4
-                    #pragma unroll
-                    for (int col = 0; col < COLS_PER_THREAD; col += 4) {
-                        const float4 vb = reinterpret_cast<const float4*>(
-                            &sharedB[i * STRIDE_B + col_base + col])[0];
-
-                        reg_k[wSubCol * COLS_PER_THREAD + col + 0] = vb.x;
-                        reg_k[wSubCol * COLS_PER_THREAD + col + 1] = vb.y;
-                        reg_k[wSubCol * COLS_PER_THREAD + col + 2] = vb.z;
-                        reg_k[wSubCol * COLS_PER_THREAD + col + 3] = vb.w;
-                    }
-                }
-
-                // Compute outer product
-                for (int wsr = 0; wsr < WARP_STEPS_M; wsr++) {
-                    for (int wsc = 0; wsc < WARP_STEPS_K; wsc++) {
+                    // Only column leaders fill the register
+                    const bool is_col_leader = (ty == 0);
+                    if (is_col_leader) {
                         #pragma unroll
-                        for (int im = 0; im < ROWS_PER_THREAD; im++) {
-                            float fixed_temp = reg_m[wsr * ROWS_PER_THREAD + im];
-                            #pragma unroll
-                            for (int ik = 0; ik < COLS_PER_THREAD; ik++) {
-                                float out = fixed_temp * reg_k[wsc * COLS_PER_THREAD + ik];
-                                int out_idx = (wsr * ROWS_PER_THREAD + im) * (WARP_STEPS_K * COLS_PER_THREAD)
-                                              + (wsc * COLS_PER_THREAD + ik);
-                                thread_results[out_idx] += out;
-                            }
+                        for (int col = 0; col < COLS_PER_THREAD; col += 4) {
+                            const float4 vb = reinterpret_cast<const float4*>(
+                                &sharedB[i * STRIDE_B + col_base + col])[0];
+
+                            reg_k[wSubCol * COLS_PER_THREAD + col + 0] = vb.x;
+                            reg_k[wSubCol * COLS_PER_THREAD + col + 1] = vb.y;
+                            reg_k[wSubCol * COLS_PER_THREAD + col + 2] = vb.z;
+                            reg_k[wSubCol * COLS_PER_THREAD + col + 3] = vb.w;
                         }
                     }
-                }
+                    // broadcast from leader, then compute outer product
+                    const unsigned mask = __activemask();
+                    const uint row_leader_lane = ty * threads_per_subtile_row + 0;
+                    const uint col_leader_lane = 0 * threads_per_subtile_row + tx;
+                    #pragma unroll
+                    for (int im = 0; im < ROWS_PER_THREAD; im++) {
+                        float a_src = is_row_leader? reg_m[wSubRow * ROWS_PER_THREAD + im] : 0.0f;
+                        float a_val = __shfl_sync(mask, a_src, row_leader_lane);
+                        #pragma unroll
+                        for (int ik = 0; ik < COLS_PER_THREAD; ik++) {
+                            float b_src = is_col_leader ? reg_k[wSubCol * COLS_PER_THREAD + ik] : 0.f;
+                            float b_val = __shfl_sync(mask, b_src, col_leader_lane);
+                            const uint out_idx = (wSubRow * ROWS_PER_THREAD + im) * (WARP_STEPS_K * COLS_PER_THREAD) + (wSubCol * COLS_PER_THREAD + ik);
+                            thread_results[out_idx] += a_val * b_val;
+                        }
+                    }
+                }            
             }
         }
         __syncthreads();
