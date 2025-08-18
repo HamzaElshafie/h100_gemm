@@ -6,6 +6,9 @@ set(CMAKE_CUDA_ARCHITECTURES 90)
 set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3")
 
+# Add flags for resource usage info
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --ptxas-options=-v")
+
 # Find required packages
 find_package(CUDA REQUIRED)
 find_package(CUDAToolkit REQUIRED)
