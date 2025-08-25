@@ -85,8 +85,9 @@ Navigate to the build directory and run the program:
 
 ```bash
 cd build
-./gemm ampere 0
+./gemm ampere 0 bf16
 ```
 
 replace `ampere` with your implementation (`ampere`/`hopper`/`cublas`) and `0` with your desired kernel ID.
+
 
