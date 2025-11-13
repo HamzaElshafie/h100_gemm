@@ -23,8 +23,8 @@
  */
 __global__ void sgemm_naive(const float* __restrict__ A, const float* __restrict__ B, float* __restrict__ C, 
     int M, int N, int K, float alpha, float beta) {
-    uint row = blockIdx.y * blockDim.y + threadIdx.y;
-    uint column = blockIdx.x * blockDim.x + threadIdx.x;
+    uint row = blockIdx.x * blockDim.x + threadIdx.x;
+    uint column = blockIdx.y * blockDim.y + threadIdx.y;
 
     if (row < M && column < K) {
         float cumulative_sum = 0.0f;
