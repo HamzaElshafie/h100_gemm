@@ -2,6 +2,8 @@
 
 A high-performance GEMM (General Matrix Multiply) implementation optimised for H100 GPUs.
 
+**Blog:** https://hamzaelshafie.bearblog.dev/worklog-optimising-gemm-on-nvidia-h100-for-cublas-like-performance-wip/
+
 ---
 
 ## Setup Instructions
@@ -89,5 +91,6 @@ cd build
 ```
 
 replace `ampere` with your implementation (`ampere`/`hopper`/`cublas`) and `0` with your desired kernel ID.
+
 
 
