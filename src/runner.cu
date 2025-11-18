@@ -11,5 +11,5 @@
 #include <stdexcept>
 
 #include "runner.cuh"
-#include "kernels/ampere/launcher.cuh"
+#include "kernels/general/launcher.cuh"
 #include "kernels/hopper/launcher.cuh"

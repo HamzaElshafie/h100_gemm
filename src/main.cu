@@ -17,10 +17,10 @@
  */
 void printUsage() {
     std::cout << "Usage: ./gemm <implementation> <kernel_ID_number> <dtype>\n"
-              << "  Implementation: ampere | hopper | cublas\n"
+              << "  Implementation: general | hopper | cublas\n"
               << "  ID:       0, 1, 2, ...\n" // TODO: Print last kernel number for each implementation
               << "  dtype:    fp32 | bf16\n"
-              << "Example: ./gemm ampere 0 fp32\n"
+              << "Example: ./gemm general 0 fp32\n"
               << "(Note): For cuBLAS, use ID=0. Example: ./gemm cublas 0 fp32\n";
 }
 
@@ -33,11 +33,11 @@ void printUsage() {
  * @throws std::invalid_argument if the kernel_id is invalid.
  */
 KernelConfig parseKernelConfig(const std::string& impl, int kernel_id) {
-    if (impl == "ampere") { // Check kernel validity
+    if (impl == "general") { // Check kernel validity
         if (kernel_id > 6 || kernel_id < 0) { // (TODO: Update later)
-            throw std::invalid_argument("Invalid Ampere kernel ID");
+            throw std::invalid_argument("Invalid general kernel ID");
         }
-        return KernelConfig(KernelType::AMPERE, kernel_id);
+        return KernelConfig(KernelType::GENERAL, kernel_id);
     } else if (impl == "hopper") {
         if (kernel_id > 1 || kernel_id < 0) { // (TODO: Update later)
             throw std::invalid_argument("Invalid Hopper kernel ID");

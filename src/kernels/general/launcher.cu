@@ -27,7 +27,7 @@
 #include "sgemm_warptiling.cuh"
 #include "gemm_warptiling_bf16.cuh"
 
-namespace ampere {
+namespace general {
     /**
      * @brief Launches a naive sgemm kernel
      * 
