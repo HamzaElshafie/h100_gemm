@@ -4,6 +4,18 @@ A high-performance GEMM (General Matrix Multiply) implementation optimised for H
 
 **Blog:** https://hamzaelshafie.bearblog.dev/worklog-optimising-gemm-on-nvidia-h100-for-cublas-like-performance-wip/
 
+| Kernel | TFLOP/s | Perf. relative to cuBLAS %<br>Full precision<br>(FP32) | Perf. relative to cuBLAS %<br>Mixed precision<br>(BF16 + FP32) |
+|--------|---------|-------------------------------------------------------|---------------------------------------------------------------|
+| Naive | 0.5/4.0 | 1 | 0.5 |
+| Naive (coalesced) | 4.2/2.7 | 8.2 | 0.4 (Idk why!) |
+| Tiled (SMEM) | 7.2/7.0 | 13.9 | 1.0 |
+| 1D Register Tiling | 12.9/13.0 | 24.9 | 1.8 |
+| 2D Register Tiling | 19.1/23.3 | 36.8 | 3.1 |
+| Vectorised 2D Register Tiling | 37.2/25.6 | 72.0 | 3.3 |
+| Warp Tiling | 41.4/31.5 | 79.8 | 4.3 |
+| TBC | - | - | - |
+| **cuBLAS** | **51.5 / 739.8** | **100%** | **100%** |
+
 ---
 
 ## Setup Instructions
@@ -91,6 +103,7 @@ cd build
 ```
 
 replace `ampere` with your implementation (`ampere`/`hopper`/`cublas`) and `0` with your desired kernel ID.
+
 
 
 
