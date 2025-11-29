@@ -9,9 +9,15 @@ template <const uint TILE_SIZE_M, const uint TILE_SIZE_N, const uint TILE_SIZE_K
 __global__ void sgemm_vectorised(const float *__restrict__ A, const float *__restrict__ B, float *__restrict__ C,
                                  int M, int N, int K, float alpha, float beta)
 {
+    // Allocate shared memory. Use padded leading strides that keep float4 alignment
+    constexpr uint STRIDE_A = (TILE_SIZE_M % 32u == 0u) ? (TILE_SIZE_M + 4u) : TILE_SIZE_M;
+    constexpr uint STRIDE_B = (TILE_SIZE_K % 32u == 0u) ? (TILE_SIZE_K + 4u) : TILE_SIZE_K;
+    static_assert((STRIDE_A % 4u) == 0u, "STRIDE_A must keep float4 alignment");
+    static_assert((STRIDE_B % 4u) == 0u, "STRIDE_B must keep float4 alignment");
+
     // Allocate shared memory
-    __shared__ float sharedA[TILE_SIZE_M * TILE_SIZE_N];
-    __shared__ float sharedB[TILE_SIZE_N * TILE_SIZE_K];
+    __shared__ float sharedA[STRIDE_A * TILE_SIZE_N];
+    __shared__ float sharedB[TILE_SIZE_N * STRIDE_B];
 
     // Identify the tile of C this thread block is responsible for
     const uint block_row = blockIdx.y;
@@ -45,13 +51,13 @@ __global__ void sgemm_vectorised(const float *__restrict__ A, const float *__res
         // Populate smem using vector loads
         float4 tempA = reinterpret_cast<const float4 *>(&A[smem_ty_A * N + smem_tx_A * 4])[0]; // [0] dereference issues one ld.global.nc.v4.f32
         // Transpose A (instead of 128x8 previously for ex, now it will be 8x128)
-        sharedA[(smem_tx_A * 4 + 0) * TILE_SIZE_M + smem_ty_A] = tempA.x;
-        sharedA[(smem_tx_A * 4 + 1) * TILE_SIZE_M + smem_ty_A] = tempA.y;
-        sharedA[(smem_tx_A * 4 + 2) * TILE_SIZE_M + smem_ty_A] = tempA.z;
-        sharedA[(smem_tx_A * 4 + 3) * TILE_SIZE_M + smem_ty_A] = tempA.w;
+        sharedA[(smem_tx_A * 4 + 0) * STRIDE_A + smem_ty_A] = tempA.x;
+        sharedA[(smem_tx_A * 4 + 1) * STRIDE_A + smem_ty_A] = tempA.y;
+        sharedA[(smem_tx_A * 4 + 2) * STRIDE_A + smem_ty_A] = tempA.z;
+        sharedA[(smem_tx_A * 4 + 3) * STRIDE_A + smem_ty_A] = tempA.w;
 
         float4 tempB = reinterpret_cast<const float4 *>(&B[smem_ty_B * K + smem_tx_B * 4])[0];
-        reinterpret_cast<float4 *>(&sharedB[smem_ty_B * TILE_SIZE_K + smem_tx_B * 4])[0] = tempB;
+        reinterpret_cast<float4 *>(&sharedB[smem_ty_B * STRIDE_B + smem_tx_B * 4])[0] = tempB;
 
         __syncthreads();
 
@@ -64,8 +70,8 @@ __global__ void sgemm_vectorised(const float *__restrict__ A, const float *__res
             {
                 uint global_smem_row_idx = ty * ROWS_PER_THREAD + row;
                 // i will be the same for the whole "column" although since its transposed we are accessing same row.
-                // Notice how we also skip rows by TILE_SIZE_M now
-                float4 temp_shared_A = reinterpret_cast<float4 *>(&sharedA[i * TILE_SIZE_M + global_smem_row_idx])[0]; // ld.shared.v4.f32
+                // Notice how we also skip rows by STRIDE_A now
+                float4 temp_shared_A = reinterpret_cast<float4 *>(&sharedA[i * STRIDE_A + global_smem_row_idx])[0]; // ld.shared.v4.f32
                 reg_m[row + 0] = temp_shared_A.x;
                 reg_m[row + 1] = temp_shared_A.y;
                 reg_m[row + 2] = temp_shared_A.z;
@@ -75,7 +81,7 @@ __global__ void sgemm_vectorised(const float *__restrict__ A, const float *__res
             {
                 // We can do same vectorised loads
                 uint global_smem_col_idx = tx * COLS_PER_THREAD + col;
-                float4 temp_shared_B = reinterpret_cast<float4 *>(&sharedB[i * TILE_SIZE_K + global_smem_col_idx])[0];
+                float4 temp_shared_B = reinterpret_cast<float4 *>(&sharedB[i * STRIDE_B + global_smem_col_idx])[0];
                 reg_k[col + 0] = temp_shared_B.x;
                 reg_k[col + 1] = temp_shared_B.y;
                 reg_k[col + 2] = temp_shared_B.z;
