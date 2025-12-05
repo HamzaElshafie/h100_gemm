@@ -28,6 +28,7 @@ sgemm_warptiling(const float* __restrict__ A, const float* __restrict__ B, float
     const uint block_row = blockIdx.y;
     const uint block_column = blockIdx.x;
 
+    // WARP_STEPS_M = Total pixels in a warp tile / total pixels covered by a warp in a single vertical sweep
     constexpr uint WARP_STEPS_M = (WARP_TILE_M * WARP_TILE_K) / (WARPSIZE * ROWS_PER_THREAD * COLS_PER_THREAD * WARP_STEPS_K);
     // Warp subtile is WARP_SUB_M x WARP_SUB_K
     constexpr uint WARP_SUB_M = WARP_TILE_M / WARP_STEPS_M; // 64 / 1 = 64
