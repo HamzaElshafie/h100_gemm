@@ -61,6 +61,7 @@ sgemm_warptiling(const float* __restrict__ A, const float* __restrict__ B, float
     const uint smem_ty_A = threadIdx.x / VEC_CHUNKS_N; // --> 0, ..., 31
     const uint smem_tx_A = threadIdx.x % VEC_CHUNKS_N; // --> 0, 1, 2, 3
     // If we give each thread a vector load of 4 elements along TILE_SIZE_N, how many different rows of sharedA can we cover in one pass through all the threads?
+    // Total Capacity Per Pass / Row Length
     const uint strideA = (NUM_THREADS * 4) / TILE_SIZE_N; // 32 rows per pass
 
     const uint smem_ty_B = threadIdx.x / VEC_CHUNKS_K; // --> 0, 1, 2, 3

@@ -51,8 +51,7 @@ enum class GeneralKernelVariant
  */
 enum class HopperKernelVariant
 {
-    gemm_warptiling_bf16 = 0,
-    gemm_warptiling = gemm_warptiling_bf16 // Alias so the same ID can be used regardless of dtype choice (fp32 or bf16)
+    gemm_bf16_wgmma_tma = 0,
 };
 
 /**
@@ -122,7 +121,8 @@ void launchKernel(const KernelConfig &config,
             break;
 
         case KernelType::HOPPER:
-            throw std::invalid_argument("No generic Hopper-only kernels here; use CUBLAS or general path for architecture-agnostic kernels");
+            throw std::invalid_argument("No Hopper-only kernels here (No support for FP32 dtype); use 
+                general path for architecture-agnostic kernels");
 
         case KernelType::CUBLAS:
             cublas::run_gemm_cublas(A, B, C, M, N, K, alpha, beta, handle);
@@ -134,6 +134,7 @@ void launchKernel(const KernelConfig &config,
         switch (config.type)
         {
         case KernelType::HOPPER:
+            // Add here new kernel
             throw std::invalid_argument("No generic Hopper-only kernels here; use CUBLAS or general path for architecture-agnostic kernels");
 
         case KernelType::CUBLAS:

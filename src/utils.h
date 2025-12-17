@@ -39,6 +39,27 @@
     } while (0)
 
 /**
+ * @brief CUDA Driver API error checking macro
+ *
+ * Evaluates a CUDA Driver API call and checks for errors.
+ * If an error is detected, prints detailed information and terminates the program.
+ */
+#define CU_CHECK(call)                                                              \
+    do                                                                              \
+    {                                                                               \
+        CUresult error = call;                                                      \
+        if (error != CUDA_SUCCESS)                                                  \
+        {                                                                           \
+            const char *errStr = nullptr;                                           \
+            cuGetErrorString(error, &errStr);                                       \
+            std::cerr << "CUDA Driver API error at " << __FILE__ << ":" << __LINE__ \
+                      << " - " << (errStr ? errStr : "Unknown error")               \
+                      << " (" << error << ")" << std::endl;                         \
+            exit(EXIT_FAILURE);                                                     \
+        }                                                                           \
+    } while (0)
+
+/**
  * @brief cuBLAS error checking macro
  *
  * Evaluates a cuBLAS call and checks for errors.
