@@ -3,8 +3,8 @@
  *
  * @brief Utility functions for hopper-specific kernels
  */
-#ifndef HOPPER_UTILS
-#define HOPPER_UTILS
+#ifndef HOPPER_UTILS_CUH
+#define HOPPER_UTILS_CUH
 
 #include <iostream>
 #include <chrono>
@@ -14,6 +14,8 @@
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 #include <vector>
+#include <cuda.h>
+#include <cuda/barrier>
 #include <type_traits>
 #include <cuda_bf16.h> // for __nv_bfloat16
 
@@ -29,6 +31,8 @@ using bf16 = __nv_bfloat16;
  * using the CUDA Driver API. The tensor map is required for Tensor Memory Accelerator (TMA) asynchronous memory operations
  * on Hopper.
  *
+ * @cite https://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__TENSOR__MEMORY.html#group__CUDA__TENSOR__MEMORY_1ga7c7d2aaac9e49294304e755e6f341d7
+ *
  * @tparam BlockMinorSize   The tile size in the minor (fastest-changing) dimension.
  * @tparam BlockMajorSize   The tile size in the major (slowest-changing) dimension.
  * @param tensorMap         Pointer to the CUtensorMap structure to be filled.
@@ -37,7 +41,7 @@ using bf16 = __nv_bfloat16;
  * @param width             Number of columns in the tensor.
  */
 template <const uint BlockMinorSize, const uint BlockMajorSize>
-void create_tensor_map(CUtensorMap *tensorMap, bf16 *tensor_ptr, uint height, uint width)
+void create_tensor_map(CUtensorMap *tensor_map, bf16 *tensor_ptr, uint height, uint width)
 {
     // Starting address of memory region described by tensor (casting to void
     // as the tensor map descriptor is type-agnostic.)
@@ -66,10 +70,42 @@ void create_tensor_map(CUtensorMap *tensorMap, bf16 *tensor_ptr, uint height, ui
 
     // Create tensor map
     CU_CHECK(cuTensorMapEncodeTiled(
-        tensorMap, CU_TENSOR_MAP_DATA_TYPE_BFLOAT16, 2, gmem_address,
+        tensor_map, CU_TENSOR_MAP_DATA_TYPE_BFLOAT16, 2, gmem_address,
         global_dim, global_strides + 1, box_dim, elem_strides,
         CU_TENSOR_MAP_INTERLEAVE_NONE, CU_TENSOR_MAP_SWIZZLE_128B,
         CU_TENSOR_MAP_L2_PROMOTION_NONE, CU_TENSOR_MAP_FLOAT_OOB_FILL_NONE));
+}
+
+/**
+ * @brief Allocates device memory and creates a CUDA tensor map descriptor for TMA operations.
+ *
+ * This function allocates device memory for a CUtensorMap descriptor, creates the tensor map on the host
+ * using the provided tensor pointer and dimensions, and copies the descriptor to the device. It internally
+ * calls create_tensor_map() to perform the host-side descriptor creation. The resulting device pointer can be
+ * used in kernels that require TMA tensor maps on Hopper architectures.
+ *
+ * @tparam BlockMinorSize   The tile size in the minor (fastest-changing) dimension.
+ * @tparam BlockMajorSize   The tile size in the major (slowest-changing) dimension.
+ * @param tensor_ptr        Pointer to the tensor data in global memory.
+ * @param height            Number of rows in the tensor.
+ * @param width             Number of columns in the tensor.
+ * @return                  Device pointer to the allocated and initialized CUtensorMap descriptor.
+ */
+template <const uint BlockMinorSize, const uint BlockMajorSize>
+__host__ static inline CUtensorMap *
+create_and_allocate_tensor_map(bf16 *tensor_ptr, uint height, uint width)
+{
+    CUtensorMap *tensor_map;
+    // Allocate device memory for the tensor map descriptor.
+    CUDA_CHECK(cudaMalloc((void **)&tensor_map, sizeof(CUtensorMap)));
+    // Register the tensorMap in our device memory pointers
+    resources.add_device_ptr(tensor_map);
+    // Create on host
+    CUtensorMap tensor_map_host;
+    create_tensor_map<BlockMinorSize, BlockMajorSize>(&tensor_map_host, tensor_ptr, height, width);
+    // Copy descriptor to device
+    CUDA_CHECK(cudaMemcpy(tensor_map, &tensor_map_host, sizeof(CUtensorMap), cudaMemcpyHostToDevice));
+    return tensor_map;
 }
 
 #endif
