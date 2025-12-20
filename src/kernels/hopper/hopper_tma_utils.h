@@ -1,21 +1,13 @@
 /**
- * @file hopper_utils.h
+ * @file hopper_tma_utils.h
  *
- * @brief Utility functions for hopper-specific kernels
+ * @brief Host-side utilities for Tensor Memory Accelerator (TMA) on Hopper.
  */
-#ifndef HOPPER_UTILS_CUH
-#define HOPPER_UTILS_CUH
+#ifndef HOPPER_TMA_UTILS_H
+#define HOPPER_TMA_UTILS_H
 
-#include <iostream>
-#include <chrono>
-#include <cstdlib>
-#include <ctime>
-#include <cmath>
 #include <cuda_runtime.h>
-#include <cublas_v2.h>
-#include <vector>
 #include <cuda.h>
-#include <cuda/barrier>
 #include <type_traits>
 #include <cuda_bf16.h> // for __nv_bfloat16
 
