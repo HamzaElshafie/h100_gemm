@@ -91,7 +91,7 @@ create_and_allocate_tensor_map(bf16 *tensor_ptr, uint height, uint width)
     // Allocate device memory for the tensor map descriptor.
     CUDA_CHECK(cudaMalloc((void **)&tensor_map, sizeof(CUtensorMap)));
     // Register the tensorMap in our device memory pointers
-    resources.add_device_ptr(tensor_map);
+    // resources.add_device_ptr(tensor_map);
     // Create on host
     CUtensorMap tensor_map_host;
     create_tensor_map<BlockMinorSize, BlockMajorSize>(&tensor_map_host, tensor_ptr, height, width);

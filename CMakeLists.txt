@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.18)
 project(h100_gemm CUDA CXX)
 
 # Set CUDA architecture
-set(CMAKE_CUDA_ARCHITECTURES 90)
-set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
+set(CMAKE_CUDA_ARCHITECTURES 90a)
+set(CMAKE_CUDA_COMPILER /root/miniconda3/envs/h100gemm_env/bin/nvcc)
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3")
 
 # Add flags for resource usage info
@@ -32,6 +32,7 @@ target_link_libraries(gemm PRIVATE
     CUDA::cudart
     CUDA::cublas
     CUDA::cublasLt
+    CUDA::cuda_driver
 )
 
 # Set C++ standard

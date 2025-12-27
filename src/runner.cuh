@@ -17,8 +17,7 @@
 /**
  * @brief Types of supported kernel implementations.
  */
-enum class KernelType
-{
+enum class KernelType {
     GENERAL,
     HOPPER,
     CUBLAS
@@ -27,8 +26,7 @@ enum class KernelType
 /**
  * @brief general kernel variants.
  */
-enum class GeneralKernelVariant
-{
+enum class GeneralKernelVariant {
     naive_sgemm = 0,
     coalesced_sgemm = 1,
     sgemm_tiled_shared = 2,
@@ -49,16 +47,14 @@ enum class GeneralKernelVariant
 /**
  * @brief Hopper kernel variants.
  */
-enum class HopperKernelVariant
-{
+enum class HopperKernelVariant {
     gemm_bf16_wgmma_tma = 0
 };
 
 /**
  * @brief Configuration for selecting and launching a specific kernel.
  */
-struct KernelConfig
-{
+struct KernelConfig {
     KernelType type; /**< The type of kernel implementation (general, Hopper or CUBLAS) */
     int kernel_id;   /**< The kernel variant ID */
 
@@ -71,9 +67,7 @@ struct KernelConfig
 };
 
 template <typename>
-struct always_false : std::false_type
-{
-};
+struct always_false : std::false_type {};
 
 /**
  * @brief Launches the selected kernel based on the provided configuration.
@@ -84,16 +78,12 @@ struct always_false : std::false_type
 template <typename T>
 void launchKernel(const KernelConfig &config,
                   const T *__restrict__ A, const T *__restrict__ B, T *__restrict__ C,
-                  int M, int N, int K, float alpha, float beta, cublasHandle_t handle)
-{
+                  int M, int N, int K, float alpha, float beta, cublasHandle_t handle){
 
-    if constexpr (std::is_same_v<T, float>)
-    {
-        switch (config.type)
-        {
+    if constexpr (std::is_same_v<T, float>){
+        switch (config.type) {
         case KernelType::GENERAL:
-            switch (static_cast<GeneralKernelVariant>(config.kernel_id))
-            {
+            switch (static_cast<GeneralKernelVariant>(config.kernel_id)){
             case GeneralKernelVariant::naive_sgemm:
                 general::run_sgemm_naive(A, B, C, M, N, K, alpha, beta);
                 break;
@@ -121,21 +111,17 @@ void launchKernel(const KernelConfig &config,
             break;
 
         case KernelType::HOPPER:
-            throw std::invalid_argument("No Hopper-only kernels here (No support for FP32 dtype); use 
-                general path for architecture-agnostic kernels");
+            throw std::invalid_argument("No Hopper-only kernels here (No support for FP32 dtype); use general path for architecture-agnostic kernels");
 
         case KernelType::CUBLAS:
             cublas::run_gemm_cublas(A, B, C, M, N, K, alpha, beta, handle);
             break;
         }
     }
-    else if constexpr (std::is_same_v<T, __nv_bfloat16>)
-    {
-        switch (config.type)
-        {
+    else if constexpr (std::is_same_v<T, __nv_bfloat16>){
+        switch (config.type){
         case KernelType::HOPPER:
-            switch (static_cast<HopperKernelVariant>(config.kernel_id))
-            {
+            switch (static_cast<HopperKernelVariant>(config.kernel_id)){
             case HopperKernelVariant::gemm_bf16_wgmma_tma:
                 hopper::run_gemm_bf16_wgmma_tma(A, B, C, M, N, K, alpha, beta);
                 break;
@@ -150,8 +136,7 @@ void launchKernel(const KernelConfig &config,
 
         case KernelType::GENERAL:
             // Same variant ID, bf16 path calls the bf16 kernels
-            switch (static_cast<GeneralKernelVariant>(config.kernel_id))
-            {
+            switch (static_cast<GeneralKernelVariant>(config.kernel_id)){
             case GeneralKernelVariant::naive_sgemm:
                 general::run_gemm_naive_bf16(A, B, C, M, N, K, alpha, beta);
                 break;
@@ -178,8 +163,7 @@ void launchKernel(const KernelConfig &config,
             }
         }
     }
-    else
-    {
+    else {
         static_assert(always_false<T>::value, "Unsupported element type for launchKernel");
     }
 }

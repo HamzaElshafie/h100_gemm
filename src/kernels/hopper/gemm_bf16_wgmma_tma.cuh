@@ -30,7 +30,9 @@ gemm_bf16_wgmma_tma(const CUtensorMap* __restrict__ tensorMapA, const CUtensorMa
     int num_block_m = blockIdx.x / CEIL_DIV(N, TILE_SIZE_N);
 
     // SMEM barriers for A and B
+    #pragma nv_diag_suppress static_var_with_dynamic_init
     __shared__ barrier barA; 
+    #pragma nv_diag_suppress static_var_with_dynamic_init
     __shared__ barrier barB;
 
     if (threadIdx.x == 0) {
@@ -77,7 +79,8 @@ gemm_bf16_wgmma_tma(const CUtensorMap* __restrict__ tensorMapA, const CUtensorMa
     int warp = tid / 32;
     uint32_t row = warp * 16 + lane / 4;
     // Move pointer (num_block_m * TILE_SIZE_M) down and (num_block_n * TILE_SIZE_N * M) to the right
-    bf16 *block_C = C + (num_block_m * TILE_SIZE_M) + (num_block_n * TILE_SIZE_N * M);
+    // bf16 *block_C = C + (num_block_m * TILE_SIZE_M) + (num_block_n * TILE_SIZE_N * M);
+    bf16 *block_C = C + num_block_n * TILE_SIZE_N + num_block_m * TILE_SIZE_M * N;
 
     for (int m_it = 0; m_it < TILE_SIZE_M / WGMMA_M; ++m_it) {
         for (int n_it = 0; n_it < TILE_SIZE_N / WGMMA_N; ++n_it) {
