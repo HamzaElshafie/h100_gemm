@@ -47,11 +47,11 @@ enum class GeneralKernelVariant
 };
 
 /**
- * @brief Hopper kernel variants (to be defined).
+ * @brief Hopper kernel variants.
  */
 enum class HopperKernelVariant
 {
-    gemm_bf16_wgmma_tma = 0,
+    gemm_bf16_wgmma_tma = 0
 };
 
 /**
@@ -134,8 +134,15 @@ void launchKernel(const KernelConfig &config,
         switch (config.type)
         {
         case KernelType::HOPPER:
-            // Add here new kernel
-            throw std::invalid_argument("No generic Hopper-only kernels here; use CUBLAS or general path for architecture-agnostic kernels");
+            switch (static_cast<HopperKernelVariant>(config.kernel_id))
+            {
+            case HopperKernelVariant::gemm_bf16_wgmma_tma:
+                hopper::run_gemm_bf16_wgmma_tma(A, B, C, M, N, K, alpha, beta);
+                break;
+            default:
+                throw std::invalid_argument("Unknown Hopper kernel ID");
+            }
+            break;
 
         case KernelType::CUBLAS:
             cublas::run_gemm_cublas_bf16(A, B, C, M, N, K, alpha, beta, handle);

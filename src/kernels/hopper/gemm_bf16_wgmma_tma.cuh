@@ -9,7 +9,6 @@
 #include "hopper_wgmma_utils.cuh"
 #include "hopper_tma_utils.h"
 
-
 // Alias for simplicity
 using bf16 = __nv_bfloat16;
 
@@ -87,15 +86,16 @@ gemm_bf16_wgmma_tma(const CUtensorMap* __restrict__ tensorMapA, const CUtensorMa
                 int col = 16 * w + 2 * (tid % 4);
                 #define IDX(i, j) ((j + n_it * WGMMA_N) * M + ((i) + m_it * WGMMA_M))
 
-                block_C[IDX(row, col)] = d[w][0];
-                block_C[IDX(row, col + 1)] = d[w][1];
-                block_C[IDX(row + 8, col)] = d[w][2];
-                block_C[IDX(row + 8, col + 1)] = d[w][3];
+                // Apply alpha scaling to accumulator results and add beta*C
+                block_C[IDX(row, col)] = __float2bfloat16(alpha * __bfloat162float(d[w][0]) + beta * __bfloat162float(block_C[IDX(row, col)]));
+                block_C[IDX(row, col + 1)] = __float2bfloat16(alpha * __bfloat162float(d[w][1]) + beta * __bfloat162float(block_C[IDX(row, col + 1)]));
+                block_C[IDX(row + 8, col)] = __float2bfloat16(alpha * __bfloat162float(d[w][2]) + beta * __bfloat162float(block_C[IDX(row + 8, col)]));
+                block_C[IDX(row + 8, col + 1)] = __float2bfloat16(alpha * __bfloat162float(d[w][3]) + beta * __bfloat162float(block_C[IDX(row + 8, col + 1)]));
 
-                block_C[IDX(row, col + 8)] = d[w][4];
-                block_C[IDX(row, col + 9)] = d[w][5];
-                block_C[IDX(row + 8, col + 8)] = d[w][6];
-                block_C[IDX(row + 8, col + 9)] = d[w][7];
+                block_C[IDX(row, col + 8)] = __float2bfloat16(alpha * __bfloat162float(d[w][4]) + beta * __bfloat162float(block_C[IDX(row, col + 8)]));
+                block_C[IDX(row, col + 9)] = __float2bfloat16(alpha * __bfloat162float(d[w][5]) + beta * __bfloat162float(block_C[IDX(row, col + 9)]));
+                block_C[IDX(row + 8, col + 8)] = __float2bfloat16(alpha * __bfloat162float(d[w][6]) + beta * __bfloat162float(block_C[IDX(row + 8, col + 8)]));
+                block_C[IDX(row + 8, col + 9)] = __float2bfloat16(alpha * __bfloat162float(d[w][7]) + beta * __bfloat162float(block_C[IDX(row + 8, col + 9)]));
 
                 #undef IDX
             }
