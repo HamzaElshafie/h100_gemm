@@ -74,11 +74,16 @@ struct always_false : std::false_type {};
  *
  * Template dispatches on element type T (float or __nv_bfloat16) so that the same
  * general variant ID can be used for both fp32 and bf16 runs.
+ * 
+ * @param comparison_type When config.type is CUBLAS and T is bf16, this determines
+ *                        which cuBLAS variant to use (GENERAL or HOPPER layout).
+ *                        Ignored for other cases.
  */
 template <typename T>
 void launchKernel(const KernelConfig &config,
                   const T *__restrict__ A, const T *__restrict__ B, T *__restrict__ C,
-                  int M, int N, int K, float alpha, float beta, cublasHandle_t handle){
+                  int M, int N, int K, float alpha, float beta, cublasHandle_t handle,
+                  KernelType comparison_type = KernelType::GENERAL){
 
     if constexpr (std::is_same_v<T, float>){
         switch (config.type) {
@@ -131,7 +136,12 @@ void launchKernel(const KernelConfig &config,
             break;
 
         case KernelType::CUBLAS:
-            cublas::run_gemm_cublas_bf16(A, B, C, M, N, K, alpha, beta, handle);
+            // Use run_gemm_cublas_bf16 for GENERAL kernels, run_gemm_cublas_bf16_h100 for HOPPER kernels
+            if (comparison_type == KernelType::GENERAL) {
+                cublas::run_gemm_cublas_bf16(A, B, C, M, N, K, alpha, beta, handle);
+            } else {
+                cublas::run_gemm_cublas_bf16_h100(A, B, C, M, N, K, alpha, beta, handle);
+            }
             break;
 
         case KernelType::GENERAL:

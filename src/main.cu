@@ -20,7 +20,7 @@ void printUsage() {
               << "  Implementation: general | hopper | cublas\n"
               << "  ID:       0, 1, 2, ...\n" // TODO: Print last kernel number for each implementation
               << "  dtype:    fp32 | bf16\n"
-              << "Example: ./gemm general 0 fp32\n"
+              << "Example: ./gemm hopper 0 fp32\n"
               << "(Note): For cuBLAS, use ID=0. Example: ./gemm cublas 0 fp32\n";
 }
 
@@ -145,9 +145,9 @@ int run_path(const KernelConfig& config,
             launchKernel<T>(config, A_device, B_device, C_device, M, N, K, alpha, beta, handle);
             CUDA_CHECK(cudaMemcpy(C_host, C_device, curr_mem_size, cudaMemcpyDeviceToHost));
 
-            // cuBLAS op
+            // cuBLAS op - pass the config.type as comparison_type so the correct cuBLAS variant is used
             KernelConfig cublas_config(KernelType::CUBLAS, 0);
-            launchKernel<T>(cublas_config, A_device, B_device, C_device_ref, M, N, K, alpha, beta, handle);
+            launchKernel<T>(cublas_config, A_device, B_device, C_device_ref, M, N, K, alpha, beta, handle, config.type);
             CUDA_CHECK(cudaMemcpy(C_host_ref, C_device_ref, curr_mem_size, cudaMemcpyDeviceToHost));
 
             // Verify results
@@ -166,13 +166,15 @@ int run_path(const KernelConfig& config,
 
         // Warmup cuBLAS kernel
         KernelConfig cublas_config(KernelType::CUBLAS, 0);
-        launchKernel<T>(cublas_config, A_device, B_device, C_device_ref, M, N, K, alpha, beta, handle);
+        // If comparing against a custom kernel, use its type; otherwise default to GENERAL
+        KernelType cublas_comparison_type = (config.type != KernelType::CUBLAS) ? config.type : KernelType::GENERAL;
+        launchKernel<T>(cublas_config, A_device, B_device, C_device_ref, M, N, K, alpha, beta, handle, cublas_comparison_type);
 
         // Start cuBLAS timing
         CUDA_CHECK(cudaEventRecord(start));
         // Run kernel multiple time to smooth out timing variations
         for (int i = 0; i < repeat; i++) {
-            launchKernel<T>(cublas_config, A_device, B_device, C_device, M, N, K, alpha, beta, handle);
+            launchKernel<T>(cublas_config, A_device, B_device, C_device, M, N, K, alpha, beta, handle, cublas_comparison_type);
         }
         CUDA_CHECK(cudaEventRecord(stop));
         CUDA_CHECK(cudaEventSynchronize(stop));

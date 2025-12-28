@@ -58,4 +58,7 @@ namespace cublas
 
     void run_gemm_cublas_bf16(const __nv_bfloat16 *__restrict__ A, const __nv_bfloat16 *__restrict__ B, __nv_bfloat16 *__restrict__ C,
                               int M, int N, int K, float alpha, float beta, cublasHandle_t handle);
+
+    void run_gemm_cublas_bf16_h100(const __nv_bfloat16 *__restrict__ A, const __nv_bfloat16 *__restrict__ B, __nv_bfloat16 *__restrict__ C,
+                                   int M, int N, int K, float alpha, float beta, cublasHandle_t handle);
 }

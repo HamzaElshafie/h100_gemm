@@ -265,7 +265,7 @@ namespace cublas {
 
     CUDA_CHECK(cudaDeviceSynchronize());
 }
-    void run_gemm_cublas_bf16_match_kernel(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B,
+    void run_gemm_cublas_bf16_h100(const __nv_bfloat16* __restrict__ A, const __nv_bfloat16* __restrict__ B,
                         __nv_bfloat16* __restrict__ C, int M, int N, int K, float alpha, float beta,
                         cublasHandle_t handle) {
     CUBLAS_CHECK(cublasGemmEx(
@@ -281,5 +281,26 @@ namespace cublas {
         CUBLAS_GEMM_DEFAULT_TENSOR_OP));
 
     CUDA_CHECK(cudaDeviceSynchronize());
+    }
+
+    // for general
+    void run_gemm_cublas_bf16(const __nv_bfloat16* __restrict__ A,
+                                const __nv_bfloat16* __restrict__ B,
+                                __nv_bfloat16* __restrict__ C,
+                                int M, int N, int K, float alpha, float beta, cublasHandle_t handle) {
+        // Same row-major -> column-major mapping as the FP32 path.
+        // Inputs/outputs are BF16; accumulate in FP32 on Tensor Cores.
+        CUBLAS_CHECK(cublasGemmEx(
+            handle,
+            CUBLAS_OP_N, CUBLAS_OP_N,
+            /* m */ K, /* n */ M, /* k */ N,
+            &alpha,
+            /* B */ B, CUDA_R_16BF, /* ldb */ K,   // B[K x N]
+            /* A */ A, CUDA_R_16BF, /* lda */ N,   // A[N x M]
+            &beta,
+            /* C */ C, CUDA_R_16BF, /* ldc */ K,   // C[K x M] in column-major == C[M x K] row-major
+            CUBLAS_COMPUTE_32F,
+            CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+        CUDA_CHECK(cudaDeviceSynchronize());
     }
 }
