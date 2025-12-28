@@ -13,7 +13,7 @@ A high-performance GEMM (General Matrix Multiply) implementation optimised for H
 | 2D Register Tiling | 19.1/23.3 | 36.8 | 3.1 |
 | Vectorised 2D Register Tiling | 37.2/25.6 | 72.0 | 3.3 |
 | Warp Tiling | 41.4/31.5 | 79.8 | 4.3 |
-| TBC | - | - | - |
+| Tensor Cores (Async TMA + WGMMA) | NA/280.4 | NA | 37.8 |
 | **cuBLAS** | **51.5 / 739.8** | **100%** | **100%** |
 
 ---
@@ -83,9 +83,9 @@ To ensure optimal performance and compatibility, configure NVCC with the correct
    Open the `CMakeLists.txt` file in the root of the project and locate:
 
    ```cmake
-   set(CMAKE_CUDA_ARCHITECTURES 90)
+   set(CMAKE_CUDA_ARCHITECTURES 90a)
    ```
-   Replace 90 with the compute capability of your GPU
+   Replace 90a with the compute capability of your GPU (Hopper kernels will only work with 90a)
 
 ### 4. Build the Project
 
@@ -103,6 +103,7 @@ cd build
 ```
 
 replace `general` with your implementation (`general`/`hopper`/`cublas`) and `0` with your desired kernel ID.
+
 
 
 
