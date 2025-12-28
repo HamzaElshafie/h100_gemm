@@ -32,7 +32,7 @@ using bf16 = __nv_bfloat16;
  * @param height            Number of rows in the tensor.
  * @param width             Number of columns in the tensor.
  */
-template <const uint BlockMinorSize, const uint BlockMajorSize>
+template <const uint BlockMajorSize, const uint BlockMinorSize>
 void create_tensor_map(CUtensorMap *tensor_map, bf16 *tensor_ptr, uint height, uint width)
 {
     // Starting address of memory region described by tensor (casting to void
@@ -83,7 +83,7 @@ void create_tensor_map(CUtensorMap *tensor_map, bf16 *tensor_ptr, uint height, u
  * @param width             Number of columns in the tensor.
  * @return                  Device pointer to the allocated and initialized CUtensorMap descriptor.
  */
-template <const uint BlockMinorSize, const uint BlockMajorSize>
+template <const uint BlockMajorSize, const uint BlockMinorSize>
 __host__ static inline CUtensorMap *
 create_and_allocate_tensor_map(bf16 *tensor_ptr, uint height, uint width)
 {
@@ -94,7 +94,7 @@ create_and_allocate_tensor_map(bf16 *tensor_ptr, uint height, uint width)
     // resources.add_device_ptr(tensor_map);
     // Create on host
     CUtensorMap tensor_map_host;
-    create_tensor_map<BlockMinorSize, BlockMajorSize>(&tensor_map_host, tensor_ptr, height, width);
+    create_tensor_map<BlockMajorSize, BlockMinorSize>(&tensor_map_host, tensor_ptr, height, width);
     // Copy descriptor to device
     CUDA_CHECK(cudaMemcpy(tensor_map, &tensor_map_host, sizeof(CUtensorMap), cudaMemcpyHostToDevice));
     return tensor_map;
