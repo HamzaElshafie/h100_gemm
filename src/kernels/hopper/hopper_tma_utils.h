@@ -33,14 +33,14 @@ using bf16 = __nv_bfloat16;
  * @param width             Number of columns in the tensor.
  */
 template <const uint BlockMajorSize, const uint BlockMinorSize>
-void create_tensor_map(CUtensorMap *tensor_map, bf16 *tensor_ptr, uint height, uint width)
+void create_tensor_map(CUtensorMap *tensor_map, bf16 *tensor_ptr, uint blocks_height, uint blocks_width)
 {
     // Starting address of memory region described by tensor (casting to void
     // as the tensor map descriptor is type-agnostic.)
     void *gmem_address = static_cast<void *>(tensor_ptr);
 
-    uint num_tiles_minor = CEIL_DIV(width, BlockMinorSize);
-    uint num_tiles_major = CEIL_DIV(height, BlockMajorSize);
+    uint num_tiles_major = blocks_height;
+    uint num_tiles_minor = blocks_width;
 
     // full size of the tensor in global memory (API expects the 5D supported
     // tensor ranks to be defined)
@@ -50,7 +50,10 @@ void create_tensor_map(CUtensorMap *tensor_map, bf16 *tensor_ptr, uint height, u
         1, 1, 1};
 
     // Define the tensor strides (in bytes) along each of the tensor ranks dims - 1
-    uint64_t global_strides[5] = {sizeof(bf16), sizeof(bf16) * BlockMinorSize * num_tiles_minor, 0, 0, 0};
+    uint64_t global_strides[5] = {
+        sizeof(bf16),
+        sizeof(bf16) * BlockMinorSize * num_tiles_minor,
+        0, 0, 0};
 
     // Define the shape of the "box_size" -> the tile shapes a TMA ops will load
     uint32_t box_dim[5] = {

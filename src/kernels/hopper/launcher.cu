@@ -44,9 +44,10 @@ namespace hopper {
         // Allocate and create tensor maps on first call or if dimensions change
         if (!d_tma_map_A || M != _prev_m || N != _prev_n || K != _prev_k) {
             d_tma_map_A = create_and_allocate_tensor_map<TILE_SIZE_M, TILE_SIZE_K>(
-                const_cast<bf16*>(A), M, K);
+                const_cast<bf16*>(A), CEIL_DIV(M,TILE_SIZE_M), CEIL_DIV(K,TILE_SIZE_K));
+
             d_tma_map_B = create_and_allocate_tensor_map<TILE_SIZE_N, TILE_SIZE_K>(
-                const_cast<bf16*>(B), N, K);
+                const_cast<bf16*>(B), CEIL_DIV(N,TILE_SIZE_N), CEIL_DIV(K,TILE_SIZE_K));
 
             _prev_m = M;
             _prev_n = N;
