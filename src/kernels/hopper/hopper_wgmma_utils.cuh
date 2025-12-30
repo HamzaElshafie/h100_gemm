@@ -24,6 +24,8 @@ namespace cde = cuda::device::experimental;
  * Extracts and encodes the relevant bits from a 64-bit value for use in WGMMA matrix descriptors.
  * Masks the lower 18 bits and shifts right by 4 positions.
  *
+ * @cite https://docs.nvidia.com/cuda/parallel-thread-execution/#asynchronous-warpgroup-level-matrix-shared-memory-layout-matrix-descriptor
+ *
  * @param x The 64-bit value to encode.
  * @return The encoded descriptor value.
  */
@@ -37,6 +39,8 @@ __device__ static inline uint64_t matrix_descriptor_encode(uint64_t x) {
  * Constructs a 64-bit descriptor that encodes the layout and access pattern for a matrix
  * stored in shared memory. The descriptor specifies the base address, leading dimension,
  * stride dimension, and swizzle mode for WGMMA matrix multiply operations.
+ *
+ * @cite https://docs.nvidia.com/cuda/parallel-thread-execution/#asynchronous-warpgroup-level-matrix-shared-memory-layout-matrix-descriptor
  *
  * @param ptr Pointer to the matrix data in shared memory.
  * @return A 64-bit WGMMA matrix descriptor with:
@@ -87,15 +91,24 @@ __device__ void wgmma64(float d[4][8], bf16 *sA, bf16 *sB) {
 }
 
 __device__ void warpgroup_arrive() {
+    /**
+     * @cite https://docs.nvidia.com/cuda/parallel-thread-execution/#asynchronous-warpgroup-level-matrix-instructions-wgmma-fence
+     */
     asm volatile("wgmma.fence.sync.aligned;\n" ::: "memory");
 }
 
 __device__ void warpgroup_commit_batch() {
+    /**
+     * @cite https://docs.nvidia.com/cuda/parallel-thread-execution/#asynchronous-warpgroup-level-matrix-instructions-wgmma-commit-group
+     */
     asm volatile("wgmma.commit_group.sync.aligned;\n" ::: "memory");
 }
 
 template <int N>
 __device__ void warpgroup_wait() {
+    /**
+     * @cite https://docs.nvidia.com/cuda/parallel-thread-execution/#asynchronous-warpgroup-level-matrix-instructions-wgmma-wait-group
+     */
     static_assert(N >= 0 && N <= 7, "WGMMA wait: N must be in range [0, 7]");
     asm volatile("wgmma.wait_group.sync.aligned %0;\n" ::"n"(N) : "memory");
 }
