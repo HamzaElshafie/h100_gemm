@@ -33,8 +33,7 @@ using bf16 = __nv_bfloat16;
  * @param width             Number of columns in the tensor.
  */
 template <const uint BlockMajorSize, const uint BlockMinorSize>
-void create_tensor_map(CUtensorMap *tensor_map, bf16 *tensor_ptr, uint blocks_height, uint blocks_width)
-{
+void create_tensor_map(CUtensorMap *tensor_map, bf16 *tensor_ptr, uint blocks_height, uint blocks_width) {
     // Starting address of memory region described by tensor (casting to void
     // as the tensor map descriptor is type-agnostic.)
     void *gmem_address = static_cast<void *>(tensor_ptr);
@@ -88,8 +87,7 @@ void create_tensor_map(CUtensorMap *tensor_map, bf16 *tensor_ptr, uint blocks_he
  */
 template <const uint BlockMajorSize, const uint BlockMinorSize>
 __host__ static inline CUtensorMap *
-create_and_allocate_tensor_map(bf16 *tensor_ptr, uint height, uint width)
-{
+create_and_allocate_tensor_map(bf16 *tensor_ptr, uint height, uint width) {
     CUtensorMap *tensor_map;
     // Allocate device memory for the tensor map descriptor.
     CUDA_CHECK(cudaMalloc((void **)&tensor_map, sizeof(CUtensorMap)));
