@@ -25,7 +25,7 @@ A high-performance GEMM (General Matrix Multiply) implementation optimised for H
 
 If you are on macOS or do not have a local NVIDIA GPU:
 
-1. **Rent a GPU instance** from a provider such as [Vast.ai](https://vast.ai), (CUDO Compute)(https://www.cudocompute.com) or others.
+1. **Rent a GPU instance** from a provider such as [Vast.ai](https://vast.ai), [CUDO Compute](https://www.cudocompute.com) or others.
 2. **Start your instance**, add your **SSH public key**, and **copy** one of the SSH connection commands provided.
 3. **Connect via SSH** using your preferred code editor (e.g., VS Code or Cursor):
    - In VS Code or Cursor, use the option to *Connect to Host...* and paste the SSH command.
@@ -104,6 +104,7 @@ cd build
 ```
 
 replace `general` with your implementation (`general`/`hopper`/`cublas`) and `0` with your desired kernel ID.
+
 
 
 
