@@ -14,6 +14,7 @@ A high-performance GEMM (General Matrix Multiply) implementation optimised for H
 | Vectorised 2D Register Tiling | 37.2/25.6 | 72.0 | 3.3 |
 | Warp Tiling | 41.4/31.5 | 79.8 | 4.3 |
 | Tensor Cores (Async TMA + WGMMA) | NA/280.4 | NA | 37.8 |
+| In Progress | NA | NA | NA |
 | **cuBLAS** | **51.5 / 739.8** | **100%** | **100%** |
 
 ---
@@ -103,6 +104,7 @@ cd build
 ```
 
 replace `general` with your implementation (`general`/`hopper`/`cublas`) and `0` with your desired kernel ID.
+
 
 
 
