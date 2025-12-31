@@ -25,8 +25,8 @@ using bf16 = __nv_bfloat16;
  *
  * @cite https://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__TENSOR__MEMORY.html#group__CUDA__TENSOR__MEMORY_1ga7c7d2aaac9e49294304e755e6f341d7
  *
- * @tparam BlockMinorSize   The tile size in the minor (fastest-changing) dimension.
  * @tparam BlockMajorSize   The tile size in the major (slowest-changing) dimension.
+ * @tparam BlockMinorSize   The tile size in the minor (fastest-changing) dimension.
  * @param tensorMap         Pointer to the CUtensorMap structure to be filled.
  * @param tensor_ptr        Pointer to the tensor data in global memory.
  * @param height            Number of rows in the tensor.
