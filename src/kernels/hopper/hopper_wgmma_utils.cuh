@@ -89,7 +89,7 @@ __device__ void warpgroup_wait() {
 }
 
 /**
- * @note Accumulator floats per thread (per one WGMMA issue) = (WGMMA_M * WGMMA_N) // NUM_THREADS
+ * @note Accumulator floats per thread (per one WGMMA issue) = (WGMMA_M * WGMMA_N) / NUM_THREADS
  */
 template <int ScaleD, int ScaleA, int ScaleB, int TransA, int TransB>
 __device__ void wgmma32(float d[2][8], bf16* sharedA, bf16*sharedB) {
@@ -112,7 +112,7 @@ __device__ void wgmma32(float d[2][8], bf16* sharedA, bf16*sharedB) {
 }
 
 /**
- * @note Accumulator floats per thread (per one WGMMA issue) = (WGMMA_M * WGMMA_N) // NUM_THREADS
+ * @note Accumulator floats per thread (per one WGMMA issue) = (WGMMA_M * WGMMA_N) / NUM_THREADS
  */
 template <int ScaleD, int ScaleA, int ScaleB, int TransA, int TransB>
 __device__ void wgmma64(float d[4][8], bf16 *sharedA, bf16 *sharedB) {
@@ -140,7 +140,7 @@ __device__ void wgmma64(float d[4][8], bf16 *sharedA, bf16 *sharedB) {
 }
 
 /**
- * @note Accumulator floats per thread (per one WGMMA issue) = (WGMMA_M * WGMMA_N) // NUM_THREADS
+ * @note Accumulator floats per thread (per one WGMMA issue) = (WGMMA_M * WGMMA_N) / NUM_THREADS
  */
 template <int ScaleD, int ScaleA, int ScaleB, int TransA, int TransB>
 __device__ void wgmma128(float d[8][8], bf16 *sharedA bf16 *sharedB) {
@@ -177,7 +177,7 @@ __device__ void wgmma128(float d[8][8], bf16 *sharedA bf16 *sharedB) {
 }
 
 /**
- * @note Accumulator floats per thread (per one WGMMA issue) = (WGMMA_M * WGMMA_N) // NUM_THREADS
+ * @note Accumulator floats per thread (per one WGMMA issue) = (WGMMA_M * WGMMA_N) / NUM_THREADS
  */
 template <int ScaleD, int ScaleA, int ScaleB, int TransA, int TransB>
 __device__ __forceinline__ void wgmma192(float d[12][8], bf16* sharedA, bf16* sharedB) {
@@ -219,7 +219,7 @@ __device__ __forceinline__ void wgmma192(float d[12][8], bf16* sharedA, bf16* sh
 }
 
 /**
- * @note Accumulator floats per thread (per one WGMMA issue) = (WGMMA_M * WGMMA_N) // NUM_THREADS
+ * @note Accumulator floats per thread (per one WGMMA issue) = (WGMMA_M * WGMMA_N) / NUM_THREADS
  */
 template <int ScaleD, int ScaleA, int ScaleB, int TransA, int TransB>
 __device__ void wgmma256(float d[16][8], bf16* sharedA, bf16* sharedB) {
