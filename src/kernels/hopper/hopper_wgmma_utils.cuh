@@ -14,10 +14,6 @@
 
 #include "utils.h"
 
-// Alias for simplicity
-using barrier = cuda::barrier<cuda::thread_scope_block>;
-namespace cde = cuda::device::experimental;
-
 /**
  * @brief Encodes a matrix descriptor value for WGMMA operations.
  *

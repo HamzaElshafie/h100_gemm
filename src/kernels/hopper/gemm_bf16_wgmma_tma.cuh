@@ -11,6 +11,8 @@
 
 // Alias for simplicity
 using bf16 = __nv_bfloat16;
+using barrier = cuda::barrier<cuda::thread_scope_block>;
+namespace cde = cuda::device::experimental;
 
 template <const uint TILE_SIZE_M, const uint TILE_SIZE_K, const uint TILE_SIZE_N,
           const uint WGMMA_M, const uint WGMMA_K, const uint WGMMA_N, const uint NUM_THREADS>
@@ -36,6 +38,10 @@ gemm_bf16_wgmma_tma(const CUtensorMap* __restrict__ tensorMapA, const CUtensorMa
     __shared__ barrier barB;
 
     if (threadIdx.x == 0) {
+        // A single thread initializes the total expected arrival count.
+        // barrier expects blockDim.x (=N) arrivals before it is released. This is the countdown counter the
+        // async barrier tracks.
+        // @cite https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/async-barriers.html#a-barrier-s-phase-arrival-countdown-completion-and-reset
         init(&barA, blockDim.x);
         init(&barB, blockDim.x);
         cde::fence_proxy_async_shared_cta();
