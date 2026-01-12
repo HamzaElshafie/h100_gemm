@@ -119,6 +119,21 @@ gemm_bf16_wgmma_tma_shapes(const CUtensorMap* tensorMapA, const CUtensorMap* ten
         // @note C is column-major
         bf16* block_C = C + (num_block_n * TILE_SIZE_N * M) + (num_block_m * TILE_SIZE_M);
         for (int m_iter = 0; m_iter < rows_per_warp_group / WGMMA_M; m_iter++) {
-            int row_tile_base_C = C + (warp_group_idx * rows_per_warp_group) + (m_iter * WGMMA_M) * M;
+            int row_tile_base_C = (warp_group_idx * rows_per_warp_group) + (m_iter * WGMMA_M);
+            for (int w = 0; w < WGMMA_N / 16; w++) {
+                int col = 16 * w + 2 * (tid % 4);
+                #define IDX(r, c) ((c) * M + ((r) + row_tile_base_C))
+
+                // Apply alpha scaling to accumulator results and add beta*C
+                block_C[IDX(row, col)] = __float2bfloat16(alpha * d[m_iter][w][0] + beta * __bfloat162float(block_C[IDX(row, col)]));
+                block_C[IDX(row, col + 1)] = __float2bfloat16(alpha * d[m_iter][w][1] + beta * __bfloat162float(block_C[IDX(row, col + 1)]));
+                block_C[IDX(row + 8, col)] = __float2bfloat16(alpha * d[m_iter][w][2] + beta * __bfloat162float(block_C[IDX(row + 8, col)]));
+                block_C[IDX(row + 8, col + 1)] = __float2bfloat16(alpha * d[m_iter][w][3] + beta * __bfloat162float(block_C[IDX(row + 8, col + 1)]));
+
+                block_C[IDX(row, col + 8)] = __float2bfloat16(alpha * d[m_iter][w][4] + beta * __bfloat162float(block_C[IDX(row, col + 8)]));
+                block_C[IDX(row, col + 9)] = __float2bfloat16(alpha * d[m_iter][w][5] + beta * __bfloat162float(block_C[IDX(row, col + 9)]));
+                block_C[IDX(row + 8, col + 8)] = __float2bfloat16(alpha * d[m_iter][w][6] + beta * __bfloat162float(block_C[IDX(row + 8, col + 8)]));
+                block_C[IDX(row + 8, col + 9)] = __float2bfloat16(alpha * d[m_iter][w][7] + beta * __bfloat162float(block_C[IDX(row + 8, col + 9)]));
+            }
         }
     }
