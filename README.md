@@ -6,16 +6,18 @@ A high-performance GEMM (General Matrix Multiply) implementation optimised for H
 
 | Kernel | TFLOP/s | Perf. relative to cuBLAS %<br>Full precision<br>(FP32) | Perf. relative to cuBLAS %<br>Mixed precision<br>(BF16 + FP32) |
 |--------|---------|-------------------------------------------------------|---------------------------------------------------------------|
-| Naive | 0.5/4.0 | 1 | 0.5 |
-| Naive (coalesced) | 4.2/2.7 | 8.2 | 0.4 (Idk why!) |
-| Tiled (SMEM) | 7.2/7.0 | 13.9 | 1.0 |
-| 1D Register Tiling | 12.9/13.0 | 24.9 | 1.8 |
-| 2D Register Tiling | 19.1/23.3 | 36.8 | 3.1 |
-| Vectorised 2D Register Tiling | 37.2/25.6 | 72.0 | 3.3 |
-| Warp Tiling | 41.4/31.5 | 79.8 | 4.3 |
-| Tensor Cores (Async TMA + WGMMA) | NA/280.4 | NA | 37.8 |
+| Naive | 0.5 / 4.0 | 1 | 0.5 |
+| Naive (coalesced) | 4.2 / 2.7 | 8.2 | 0.4 |
+| Tiled (SMEM) | 7.2 / 7.0 | 13.9 | 1.0 |
+| 1D Register Tiling | 12.9 / 13.0 | 24.9 | 1.8 |
+| 2D Register Tiling | 19.1 / 23.3 | 36.8 | 3.1 |
+| Vectorised 2D Register Tiling | 37.2 / 25.6 | 72.0 | 3.3 |
+| Warp Tiling | 41.4 / 31.5 | 79.8 | 4.3 |
+| Tensor Cores (Async TMA + WGMMA) | NA / 280.4 | NA | 37.8 |
+| WGMMA Shape Exploration | NA / 407.7 | NA | 56.9 |
 | In Progress 🚧 | NA | NA | NA |
 | **cuBLAS** | **51.5 / 739.8** | **100%** | **100%** |
+
 
 ---
 
@@ -112,6 +114,7 @@ replace `general` with your implementation (`general`/`hopper`/`cublas`) and `0`
 - [Inside NVIDIA GPUs: Anatomy of high performance matmul kernels](https://www.aleksagordic.com/blog/matmul#cpt1)
 - [Outperforming cuBLAS on H100: a Worklog](https://cudaforfun.substack.com/p/outperforming-cublas-on-h100-a-worklog)
 - [How to Optimize a CUDA Matmul Kernel for cuBLAS-like Performance: a Worklog](https://siboehm.com/articles/22/CUDA-MMM)
+
 
 
 
