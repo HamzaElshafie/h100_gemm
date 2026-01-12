@@ -102,10 +102,23 @@ namespace hopper {
         int grid_size = num_blocks_m * num_blocks_n;
         size_t shared_bytes = sizeof(SMem<TILE_SIZE_M, TILE_SIZE_K, TILE_SIZE_N>);
 
-        gemm_bf16_wgmma_tma_shapes<TILE_SIZE_M, TILE_SIZE_K, TILE_SIZE_N, WGMMA_M, WGMMA_K, WGMMA_N, NUM_THREADS>
-            <<<grid_size, NUM_THREADS, shared_bytes>>>(d_tma_map_A, d_tma_map_B, C, M, K, N, alpha, beta);
+        // Get a concrete kernel symbol so we can set attributes
+        auto kernel =
+            gemm_bf16_wgmma_tma_shapes<
+                TILE_SIZE_M, TILE_SIZE_K, TILE_SIZE_N,
+                WGMMA_M, WGMMA_K, WGMMA_N, NUM_THREADS>;
+
+        // Opt kernel into required dynamic shared memory
+        CUDA_CHECK(cudaFuncSetAttribute(
+            kernel,
+            cudaFuncAttributeMaxDynamicSharedMemorySize,
+            shared_bytes));
+
+        kernel<<<grid_size, NUM_THREADS, shared_bytes>>>(
+            d_tma_map_A, d_tma_map_B, C, M, K, N, alpha, beta);
 
         CUDA_CHECK(cudaGetLastError());
         CUDA_CHECK(cudaDeviceSynchronize());
     }
 }
+
