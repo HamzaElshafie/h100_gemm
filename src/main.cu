@@ -39,7 +39,7 @@ KernelConfig parseKernelConfig(const std::string& impl, int kernel_id) {
         }
         return KernelConfig(KernelType::GENERAL, kernel_id);
     } else if (impl == "hopper") {
-        if (kernel_id > 0 || kernel_id < 0) { // (TODO: Update later)
+        if (kernel_id > 1 || kernel_id < 0) { // (TODO: Update later)
             throw std::invalid_argument("Invalid Hopper kernel ID");
         }
         return KernelConfig(KernelType::HOPPER, kernel_id);

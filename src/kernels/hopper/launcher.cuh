@@ -13,4 +13,6 @@ namespace hopper {
 
     void run_gemm_bf16_wgmma_tma(const bf16 *__restrict__ A, const bf16 *__restrict__ B, bf16 *__restrict__ C,
                                  int M, int N, int K, float alpha, float beta);
+    void run_gemm_bf16_wgmma_tma_shapes(const bf16 *__restrict__ A, const bf16 *__restrict__ B, bf16 *__restrict__ C,
+                                        int M, int N, int K, float alpha, float beta);
 }
