@@ -27,10 +27,10 @@ using bf16 = __nv_bfloat16;
  *
  * @tparam BlockMajorSize   The tile size in the major (slowest-changing) dimension.
  * @tparam BlockMinorSize   The tile size in the minor (fastest-changing) dimension.
- * @param tensorMap         Pointer to the CUtensorMap structure to be filled.
+ * @param tensor_map        Pointer to the CUtensorMap structure to be filled.
  * @param tensor_ptr        Pointer to the tensor data in global memory.
- * @param height            Number of rows in the tensor.
- * @param width             Number of columns in the tensor.
+ * @param blocks_height     Number of tiles in the major (slowest-changing) dimension. Each tile has size BlockMajorSize.
+ * @param blocks_width      Number of tiles in the minor (fastest-changing) dimension. Each tile has size BlockMinorSize.
  */
 template <const uint BlockMajorSize, const uint BlockMinorSize>
 void create_tensor_map(CUtensorMap *tensor_map, bf16 *tensor_ptr, uint blocks_height, uint blocks_width) {
@@ -78,16 +78,16 @@ void create_tensor_map(CUtensorMap *tensor_map, bf16 *tensor_ptr, uint blocks_he
  * calls create_tensor_map() to perform the host-side descriptor creation. The resulting device pointer can be
  * used in kernels that require TMA tensor maps on Hopper architectures.
  *
- * @tparam BlockMinorSize   The tile size in the minor (fastest-changing) dimension.
  * @tparam BlockMajorSize   The tile size in the major (slowest-changing) dimension.
+ * @tparam BlockMinorSize   The tile size in the minor (fastest-changing) dimension.
  * @param tensor_ptr        Pointer to the tensor data in global memory.
- * @param height            Number of rows in the tensor.
- * @param width             Number of columns in the tensor.
+ * @param blocks_height     Number of tiles in the major (slowest-changing) dimension.
+ * @param blocks_width      Number of tiles in the minor (fastest-changing) dimension.
  * @return                  Device pointer to the allocated and initialized CUtensorMap descriptor.
  */
 template <const uint BlockMajorSize, const uint BlockMinorSize>
 __host__ static inline CUtensorMap *
-create_and_allocate_tensor_map(bf16 *tensor_ptr, uint height, uint width) {
+create_and_allocate_tensor_map(bf16 *tensor_ptr, uint blocks_height, uint blocks_width) {
     CUtensorMap *tensor_map;
     // Allocate device memory for the tensor map descriptor.
     CUDA_CHECK(cudaMalloc((void **)&tensor_map, sizeof(CUtensorMap)));
@@ -95,7 +95,7 @@ create_and_allocate_tensor_map(bf16 *tensor_ptr, uint height, uint width) {
     // resources.add_device_ptr(tensor_map);
     // Create on host
     CUtensorMap tensor_map_host;
-    create_tensor_map<BlockMajorSize, BlockMinorSize>(&tensor_map_host, tensor_ptr, height, width);
+    create_tensor_map<BlockMajorSize, BlockMinorSize>(&tensor_map_host, tensor_ptr, blocks_height, blocks_width);
     // Copy descriptor to device
     CUDA_CHECK(cudaMemcpy(tensor_map, &tensor_map_host, sizeof(CUtensorMap), cudaMemcpyHostToDevice));
     return tensor_map;
