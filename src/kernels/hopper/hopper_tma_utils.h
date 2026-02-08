@@ -75,8 +75,7 @@ void create_tensor_map(CUtensorMap *tensor_map, bf16 *tensor_ptr, uint blocks_he
  *
  * This function allocates device memory for a CUtensorMap descriptor, creates the tensor map on the host
  * using the provided tensor pointer and dimensions, and copies the descriptor to the device. It internally
- * calls create_tensor_map() to perform the host-side descriptor creation. The resulting device pointer can be
- * used in kernels that require TMA tensor maps on Hopper architectures.
+ * calls create_tensor_map() to perform the host-side descriptor creation.
  *
  * @tparam BlockMajorSize   The tile size in the major (slowest-changing) dimension.
  * @tparam BlockMinorSize   The tile size in the minor (fastest-changing) dimension.
@@ -86,7 +85,7 @@ void create_tensor_map(CUtensorMap *tensor_map, bf16 *tensor_ptr, uint blocks_he
  * @return                  Device pointer to the allocated and initialized CUtensorMap descriptor.
  */
 template <const uint BlockMajorSize, const uint BlockMinorSize>
-__host__ static inline CUtensorMap *
+__host__ static inline CUtensorMap*
 create_and_allocate_tensor_map(bf16 *tensor_ptr, uint blocks_height, uint blocks_width) {
     CUtensorMap *tensor_map;
     // Allocate device memory for the tensor map descriptor.

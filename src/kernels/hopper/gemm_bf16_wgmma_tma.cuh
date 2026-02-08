@@ -24,7 +24,7 @@ gemm_bf16_wgmma_tma(const CUtensorMap* __restrict__ tensorMapA, const CUtensorMa
     __shared__ alignas(128) bf16 sharedB[TILE_SIZE_K * TILE_SIZE_N];
     // Initialise thread's accumilator
     // d[4][8] = 32 floats per thread
-    float d[WGMMA_N / 16][8];
+    float d[WGMMA_N / WGMMA_K][8];
     memset(d, 0, sizeof(d));
 
     const int num_blocks_k = CEIL_DIV(K, TILE_SIZE_K);
