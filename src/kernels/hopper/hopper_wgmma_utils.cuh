@@ -110,7 +110,9 @@ __device__ void wgmma32(float d[2][8], bf16* sharedA, bf16*sharedB) {
 /**
  * @note Accumulator floats per thread (per one WGMMA issue) = (WGMMA_M * WGMMA_N) / NUM_THREADS
  */
-__device__ void wgmma64(float d[4][8], bf16 *sharedA, bf16 *sharedB) {
+template <int ScaleD, int ScaleA, int ScaleB, int TransA, int TransB>
+__device__ void wgmma64(float d[4][8], bf16 *sharedA, bf16 *sharedB)
+{
     uint64_t desc_a = make_smem_desc(&sharedA[0]);
     uint64_t desc_b = make_smem_desc(&sharedB[0]);
     asm volatile(
