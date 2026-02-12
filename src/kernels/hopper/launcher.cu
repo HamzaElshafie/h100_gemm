@@ -16,6 +16,7 @@
 #include "hopper_wgmma_utils.cuh"
 #include "gemm_bf16_wgmma_tma.cuh"
 #include "gemm_bf16_wgmma_tma_shapes.cuh"
+#include "gemm_bf16_pc_pipeline.cuh"
 
 // Alias for simplicity
 using bf16 = __nv_bfloat16;
@@ -115,6 +116,44 @@ namespace hopper {
             shared_bytes));
 
         kernel<<<grid_size, NUM_THREADS, shared_bytes>>>(
+            d_tma_map_A, d_tma_map_B, C, M, K, N, alpha, beta);
+
+        CUDA_CHECK(cudaGetLastError());
+        CUDA_CHECK(cudaDeviceSynchronize());
+    }
+
+    void run_gemm_bf16_pc_pipeline(const bf16* __restrict__ A, const bf16* __restrict__ B, bf16* __restrict__ C,
+                                 int M, int N, int K, float alpha, float beta) {
+        constexpr int TILE_SIZE_M = 128;
+        constexpr int TILE_SIZE_N = 128;
+        constexpr int TILE_SIZE_K = 64;
+        constexpr int NUM_THREADS = 128 * 2;
+        constexpr int NUM_STAGES = 5;
+        constexpr int WGMMA_M = 64;
+        constexpr int WGMMA_K = 16;
+        constexpr int WGMMA_N = 128;
+
+        if (!d_tma_map_A || M != _prev_m || N != _prev_n || K != _prev_k) {
+            d_tma_map_A = create_and_allocate_tensor_map<TILE_SIZE_M, TILE_SIZE_K>(
+                const_cast<bf16*>(A), CEIL_DIV(M, TILE_SIZE_M), CEIL_DIV(K, TILE_SIZE_K));
+            d_tma_map_B = create_and_allocate_tensor_map<TILE_SIZE_N, TILE_SIZE_K>(
+                const_cast<bf16*>(B), CEIL_DIV(N, TILE_SIZE_N), CEIL_DIV(K, TILE_SIZE_K));
+            _prev_m = M;
+            _prev_n = N;
+            _prev_k = K;
+        }
+        assert(M == _prev_m && N == _prev_n && K == _prev_k &&
+               "Matrix dimensions changed; tensor maps are invalid");
+
+        auto* kernel = gemm_bf16_pc_pipeline<
+            TILE_SIZE_M, TILE_SIZE_K, TILE_SIZE_N,
+            WGMMA_M, WGMMA_N, WGMMA_K, NUM_THREADS, NUM_STAGES>;
+        size_t sMemSize = sizeof(Smem<TILE_SIZE_M, TILE_SIZE_K, TILE_SIZE_N, NUM_STAGES>);
+        CUDA_CHECK(cudaFuncSetAttribute(
+            kernel,
+            cudaFuncAttributeMaxDynamicSharedMemorySize, sMemSize));
+
+        kernel<<<(M / TILE_SIZE_M) * (N / TILE_SIZE_N), NUM_THREADS, sMemSize>>>(
             d_tma_map_A, d_tma_map_B, C, M, K, N, alpha, beta);
 
         CUDA_CHECK(cudaGetLastError());

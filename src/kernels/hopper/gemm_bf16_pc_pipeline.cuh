@@ -73,6 +73,7 @@ __global__ void gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tens
         __syncthreads();
 
         float d[TILE_SIZE_M / WGMMA_M / num_consumer_warp_groups][WGMMA_N / 16][8];
+        // Only consumers need registers
         if (!is_producer) {
             memset(d, 0, sizeof(d));
         }

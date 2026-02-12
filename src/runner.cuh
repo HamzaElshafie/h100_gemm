@@ -49,7 +49,8 @@ enum class GeneralKernelVariant {
  */
 enum class HopperKernelVariant {
     gemm_bf16_wgmma_tma = 0,
-    gemm_bf16_wgmma_tma_shapes = 1
+    gemm_bf16_wgmma_tma_shapes = 1,
+    gemm_bf16_pc_pipeline = 2
 };
 
 /**
@@ -133,6 +134,9 @@ void launchKernel(const KernelConfig &config,
                 break;
             case HopperKernelVariant::gemm_bf16_wgmma_tma_shapes:
                 hopper::run_gemm_bf16_wgmma_tma_shapes(A, B, C, M, N, K, alpha, beta);
+                break;
+            case HopperKernelVariant::gemm_bf16_pc_pipeline:
+                hopper::run_gemm_bf16_pc_pipeline(A, B, C, M, N, K, alpha, beta);
                 break;
             default:
                 throw std::invalid_argument("Unknown Hopper kernel ID");

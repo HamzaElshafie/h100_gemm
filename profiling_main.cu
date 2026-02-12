@@ -7,58 +7,46 @@
 
 #include "utils.h"
 #include "kernels/hopper/hopper_tma_utils.h"
-#include "kernels/hopper/gemm_bf16_wgmma_tma_shapes.cuh"
+#include "kernels/hopper/gemm_bf16_pc_pipeline.cuh"
 
 // Alias for simplicity
 using bf16 = __nv_bfloat16;
 
-void launch_gemm_bf16_wgmma_tma_shapes(const bf16* A, const bf16* B, bf16* C, int M, int N, int K, float alpha, float beta) {
+void launch_gemm_bf16_pc_pipeline(const bf16* A, const bf16* B, bf16* C, int M, int N, int K, float alpha, float beta) {
     constexpr int TILE_SIZE_M = 128;
-    constexpr int TILE_SIZE_K = 64;
     constexpr int TILE_SIZE_N = 128;
+    constexpr int TILE_SIZE_K = 64;
+    constexpr int NUM_THREADS = 128 * 2;
+    constexpr int NUM_STAGES = 5;
     constexpr int WGMMA_M = 64;
     constexpr int WGMMA_K = 16;
     constexpr int WGMMA_N = 128;
-    constexpr int NUM_THREADS = 128;
 
-    // Create tensor maps for TMA
     CUtensorMap* d_tma_map_A = create_and_allocate_tensor_map<TILE_SIZE_M, TILE_SIZE_K>(
         const_cast<bf16*>(A), CEIL_DIV(M, TILE_SIZE_M), CEIL_DIV(K, TILE_SIZE_K));
-
     CUtensorMap* d_tma_map_B = create_and_allocate_tensor_map<TILE_SIZE_N, TILE_SIZE_K>(
         const_cast<bf16*>(B), CEIL_DIV(N, TILE_SIZE_N), CEIL_DIV(K, TILE_SIZE_K));
 
-    // Calculate grid dimensions
-    int num_blocks_m = M / TILE_SIZE_M;
-    int num_blocks_n = N / TILE_SIZE_N;
-    int grid_size = num_blocks_m * num_blocks_n;
-    size_t shared_bytes = sizeof(SMem<TILE_SIZE_M, TILE_SIZE_K, TILE_SIZE_N>);
-
-    // Get a concrete kernel symbol so we can set attributes
-    auto kernel =
-        gemm_bf16_wgmma_tma_shapes<
-            TILE_SIZE_M, TILE_SIZE_K, TILE_SIZE_N,
-            WGMMA_M, WGMMA_K, WGMMA_N, NUM_THREADS>;
-
-    // Opt kernel into required dynamic shared memory
+    auto* kernel = gemm_bf16_pc_pipeline<
+        TILE_SIZE_M, TILE_SIZE_K, TILE_SIZE_N,
+        WGMMA_M, WGMMA_N, WGMMA_K, NUM_THREADS, NUM_STAGES>;
+    size_t sMemSize = sizeof(Smem<TILE_SIZE_M, TILE_SIZE_K, TILE_SIZE_N, NUM_STAGES>);
     CUDA_CHECK(cudaFuncSetAttribute(
         kernel,
-        cudaFuncAttributeMaxDynamicSharedMemorySize,
-        shared_bytes));
+        cudaFuncAttributeMaxDynamicSharedMemorySize, sMemSize));
 
-    kernel<<<grid_size, NUM_THREADS, shared_bytes>>>(
+    kernel<<<(M / TILE_SIZE_M) * (N / TILE_SIZE_N), NUM_THREADS, sMemSize>>>(
         d_tma_map_A, d_tma_map_B, C, M, K, N, alpha, beta);
 
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
-    // Clean up tensor maps
     CUDA_CHECK(cudaFree(d_tma_map_A));
     CUDA_CHECK(cudaFree(d_tma_map_B));
 }
 
 /**
- * @brief Main entry point for the profiling program.
+ * @brief Main entry point for the profiling program (gemm_bf16_pc_pipeline only).
  */
 int main(int argc, char** argv) {
     ResourceManager<bf16> resources;
@@ -70,7 +58,7 @@ int main(int argc, char** argv) {
     
     const size_t mem_size = size * size * sizeof(bf16);
 
-    std::cout << "Profiling gemm_bf16_wgmma_tma_shapes kernel with matrix size " << size << "x" << size << std::endl;
+    std::cout << "Profiling gemm_bf16_pc_pipeline kernel with matrix size " << size << "x" << size << std::endl;
 
     // Allocate host memory
     bf16* A_host = (bf16*)malloc(mem_size);
@@ -114,13 +102,13 @@ int main(int argc, char** argv) {
     // Warm-up launches
     std::cout << "Running warm-up launches..." << std::endl;
     for (int i = 0; i < 2; ++i) {
-        launch_gemm_bf16_wgmma_tma_shapes(A_device, B_device, C_device, size, size, size, alpha, beta);
+        launch_gemm_bf16_pc_pipeline(A_device, B_device, C_device, size, size, size, alpha, beta);
         CUDA_CHECK(cudaDeviceSynchronize());
     }
 
     // Main kernel launch for profiling
     std::cout << "Running main kernel for profiling..." << std::endl;
-    launch_gemm_bf16_wgmma_tma_shapes(A_device, B_device, C_device, size, size, size, alpha, beta);
+    launch_gemm_bf16_pc_pipeline(A_device, B_device, C_device, size, size, size, alpha, beta);
     CUDA_CHECK(cudaDeviceSynchronize());
 
     std::cout << "Kernel launch completed successfully" << std::endl;
