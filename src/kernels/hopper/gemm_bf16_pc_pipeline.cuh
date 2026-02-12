@@ -56,8 +56,8 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
         int consumer_warp_group_idx = is_producer ? -1 : (warp_group_idx - 1);
 
         const int num_blocks_k = CEIL_DIV(K, TILE_SIZE_K);
-        int num_blocks_m = blockIdx.x / CEIL_DIV(N, TILE_SIZE_N);
-        int num_blocks_n = blockIdx.x % CEIL_DIV(N, TILE_SIZE_N);
+        int num_block_m = blockIdx.x / CEIL_DIV(N, TILE_SIZE_N);
+        int num_block_m = blockIdx.x % CEIL_DIV(N, TILE_SIZE_N);
 
         #pragma nv_diag_suppress static_var_with_dynamic_init
         __shared__ barrier full[NUM_STAGES];  // Signals data is ready
@@ -87,8 +87,8 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
                     bf16* B_stage = s.B + (stage * B_stage_size);
 
                     // TMA loads for A and B
-                    cde::cp_async_bulk_tensor_2d_global_to_shared(A_stage, tensorMapA, block_k_iter * TILE_SIZE_K, num_blocks_m * TILE_SIZE_M, full[stage]);
-                    cde::cp_async_bulk_tensor_2d_global_to_shared(B_stage, tensorMapB, block_k_iter * TILE_SIZE_K, num_blocks_n * TILE_SIZE_N, full[stage]);
+                    cde::cp_async_bulk_tensor_2d_global_to_shared(A_stage, tensorMapA, block_k_iter * TILE_SIZE_K, num_block_m * TILE_SIZE_M, full[stage]);
+                    cde::cp_async_bulk_tensor_2d_global_to_shared(B_stage, tensorMapB, block_k_iter * TILE_SIZE_K, num_block_n * TILE_SIZE_N, full[stage]);
 
                     // Signal data is ready
                     barrier::arrival_token token = cuda::device::barrier_arrive_tx(full[stage], 1, A_stage_size * sizeof(bf16) + B_stage_size * sizeof(bf16));
@@ -106,9 +106,8 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
                     bf16* B_stage = s.B + (stage * B_stage_size);
 
                     // Issue next TMA loads
-                    cde::cp_async_bulk_tensor_2d_global_to_shared(A_stage, tensorMapA, block_k_iter * TILE_SIZE_K, num_blocks_m * TILE_SIZE_M, full[stage]);
-                    
-                    cde::cp_async_bulk_tensor_2d_global_to_shared(B_stage, tensorMapB, block_k_iter * TILE_SIZE_K, num_blocks_n * TILE_SIZE_N, full[stage]);
+                    cde::cp_async_bulk_tensor_2d_global_to_shared(A_stage, tensorMapA, block_k_iter * TILE_SIZE_K, num_block_m * TILE_SIZE_M, full[stage]);
+                    cde::cp_async_bulk_tensor_2d_global_to_shared(B_stage, tensorMapB, block_k_iter * TILE_SIZE_K, num_block_n * TILE_SIZE_N, full[stage]);
 
                     // Signal data is ready
                     barrier::arrival_token token = cuda::device::barrier_arrive_tx(full[stage], 1, A_stage_size * sizeof(bf16) + B_stage_size * sizeof(bf16));
@@ -165,7 +164,7 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
             uint32_t row = warp * 16 + lane / 4;
             
             // @note C is column-major
-            bf16* block_C = C + (num_blocks_n * TILE_SIZE_N * M) + (num_blocks_m * TILE_SIZE_M);
+            bf16* block_C = C + (num_block_m * TILE_SIZE_N * M) + (num_block_m * TILE_SIZE_M);
             
             for (int m_iter = 0; m_iter < rows_per_consumer_warp_group / WGMMA_M; m_iter++) {
                 int row_tile_base_C = (consumer_warp_group_idx * rows_per_consumer_warp_group) + (m_iter * WGMMA_M);
