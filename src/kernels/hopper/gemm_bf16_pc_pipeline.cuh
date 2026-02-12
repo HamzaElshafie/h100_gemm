@@ -50,12 +50,12 @@ __global__ void gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tens
         // How many M rows of the output tile each 'consumer' warp group is responsible for
         // @example: TILE_SIZE_M = 128, NUM_THREADS = 256 -> num_warp_groups = 2 -> num_consumer_groups = 1
         // So consumer warp group will handle the entire 128 M output rows
-        constexpr int rows_per_consumer__warp_group = TILE_SIZE_M / num_warp_groups;
+        constexpr int rows_per_consumer_warp_group = TILE_SIZE_M / num_warp_groups;
 
         // Consumer warp group index (0-indexed among consumers only)
-        int consumer_warp_group_idx = is_producer ? -1 : (warp_group_idx - 1)
+        int consumer_warp_group_idx = is_producer ? -1 : (warp_group_idx - 1);
 
-        constexpr int num_blocks_k = CEIL_DIV(K, TILE_SIZE_K);
+        const int num_blocks_k = CEIL_DIV(K, TILE_SIZE_K);
         int num_blocks_m = blockIdx.x / CEIL_DIV(N, TILE_SIZE_N);
         int num_blocks_n = blockIdx.x % CEIL_DIV(N, TILE_SIZE_N);
 
@@ -72,7 +72,7 @@ __global__ void gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tens
         }
         __syncthreads();
 
-        float d[TILE_SIZE_M / WGMMA_M / num_consumer_warp_groups][WGMMA_N / 16][8];
+        float d[TILE_SIZE_M / WGMMA_M / num_consumer_groups][WGMMA_N / 16][8];
         // Only consumers need registers
         if (!is_producer) {
             memset(d, 0, sizeof(d));
@@ -93,8 +93,8 @@ __global__ void gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tens
                     bf16* B_stage = s.B + (stage * B_stage_size);
 
                     // TMA loads for A and B
-                    cde::cp_async_bulk_tensor_2d_global_to_shared(A_stage, tensorMapA, block_k_iter * TILE_SIZE_K, num_block_m * TILE_SIZE_M, full[stage]);
-                    cde::cp_async_bulk_tensor_2d_global_to_shared(B_stage, tensorMapB, block_k_iter * TILE_SIZE_K, num_block_n * TILE_SIZE_N, full[stage]);
+                    cde::cp_async_bulk_tensor_2d_global_to_shared(A_stage, tensorMapA, block_k_iter * TILE_SIZE_K, num_blocks_m * TILE_SIZE_M, full[stage]);
+                    cde::cp_async_bulk_tensor_2d_global_to_shared(B_stage, tensorMapB, block_k_iter * TILE_SIZE_K, num_blocks_n * TILE_SIZE_N, full[stage]);
 
                     // Signal data is ready
                     barrier::arrival_token token = cuda::device::barrier_arrive_tx(full[stage], 1, A_stage_size * sizeof(bf16) + B_stage_size * sizeof(bf16));
@@ -112,9 +112,9 @@ __global__ void gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tens
                     bf16* B_stage = s.B + (stage * B_stage_size);
 
                     // Issue next TMA loads
-                    cde::cp_async_bulk_tensor_2d_global_to_shared(A_stage, tensorMapA, block_k_iter * TILE_SIZE_K, num_block_m * TILE_SIZE_M, full[stage]);
+                    cde::cp_async_bulk_tensor_2d_global_to_shared(A_stage, tensorMapA, block_k_iter * TILE_SIZE_K, num_blocks_m * TILE_SIZE_M, full[stage]);
                     
-                    cde::cp_async_bulk_tensor_2d_global_to_shared(B_stage, tensorMapB, block_k_iter * TILE_SIZE_K, num_block_n * TILE_SIZE_N, full[stage]);
+                    cde::cp_async_bulk_tensor_2d_global_to_shared(B_stage, tensorMapB, block_k_iter * TILE_SIZE_K, num_blocks_n * TILE_SIZE_N, full[stage]);
 
                     // Signal data is ready
                     barrier::arrival_token token = cuda::device::barrier_arrive_tx(full[stage], 1, A_stage_size * sizeof(bf16) + B_stage_size * sizeof(bf16));
@@ -166,7 +166,7 @@ __global__ void gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tens
             uint32_t row = warp * 16 + lane / 4;
             
             // @note C is column-major
-            bf16* block_C = C + (num_block_n * TILE_SIZE_N * M) + (num_block_m * TILE_SIZE_M);
+            bf16* block_C = C + (num_blocks_n * TILE_SIZE_N * M) + (num_blocks_m * TILE_SIZE_M);
             
             for (int m_iter = 0; m_iter < rows_per_consumer_warp_group / WGMMA_M; m_iter++) {
                 int row_tile_base_C = (consumer_warp_group_idx * rows_per_consumer_warp_group) + (m_iter * WGMMA_M);
