@@ -23,7 +23,8 @@ struct Smem {
 template <const int TILE_SIZE_M, const int TILE_SIZE_K, const int TILE_SIZE_N,
           const int WGMMA_M, const int WGMMA_N, const int WGMMA_K, const int NUM_THREADS,
           const int NUM_STAGES = 2>
-__global__ void gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
+__global__ void __launch_bounds__(NUM_THREADS)
+gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
     int M, int K, int N, float alpha, float beta) {
         static_assert(WGMMA_N == TILE_SIZE_N, "WGMMA_N must be == TILE_SIZE_N");
         static_assert(TILE_SIZE_M % WGMMA_M == 0, "TILE_SIZE_M must be divisible by WGMMA_M");
@@ -48,9 +49,8 @@ __global__ void gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tens
         bool is_producer = (warp_group_idx == 0);
 
         // How many M rows of the output tile each 'consumer' warp group is responsible for
-        // @example: TILE_SIZE_M = 128, NUM_THREADS = 256 -> num_warp_groups = 2 -> num_consumer_groups = 1
-        // So consumer warp group will handle the entire 128 M output rows
-        constexpr int rows_per_consumer_warp_group = TILE_SIZE_M / num_warp_groups;
+        // @example: TILE_SIZE_M = 128, num_consumer_groups = 1 -> 128 rows; num_consumer_groups = 2 -> 64 rows each
+        constexpr int rows_per_consumer_warp_group = TILE_SIZE_M / num_consumer_groups;
 
         // Consumer warp group index (0-indexed among consumers only)
         int consumer_warp_group_idx = is_producer ? -1 : (warp_group_idx - 1);
@@ -71,12 +71,6 @@ __global__ void gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tens
             cde::fence_proxy_async_shared_cta();
         }
         __syncthreads();
-
-        float d[TILE_SIZE_M / WGMMA_M / num_consumer_groups][WGMMA_N / 16][8];
-        // Only consumers need registers
-        if (!is_producer) {
-            memset(d, 0, sizeof(d));
-        }
 
         if (is_producer) {
             // Producer warp group: Issues TMA loads
@@ -123,6 +117,11 @@ __global__ void gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tens
             
         } else {
             // Consumer warp groups: Execute WGMMA compute
+            // Accumulator registers - declared inside consumer branch only so
+            // ptxas doesn't allocate them for the producer warp group
+            float d[TILE_SIZE_M / WGMMA_M / num_consumer_groups][WGMMA_N / 16][8];
+            memset(d, 0, sizeof(d));
+
             // Initially signal all empty slots are available
             for (int i = 0; i < NUM_STAGES; i++) {
                 barrier::arrival_token token = empty[i].arrive();
@@ -137,7 +136,7 @@ __global__ void gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tens
                 bf16* B_stage = s.B + (stage * B_stage_size);
                 
                 // Wait for data to be ready
-                barrier::arrival_token token = full[stage].arrive_and_wait();
+                full[stage].arrive_and_wait();
 
                 // Compute phase using WGMMA
                 warpgroup_arrive();
