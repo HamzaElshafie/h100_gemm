@@ -57,7 +57,7 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
 
         const int num_blocks_k = CEIL_DIV(K, TILE_SIZE_K);
         int num_block_m = blockIdx.x / CEIL_DIV(N, TILE_SIZE_N);
-        int num_block_m = blockIdx.x % CEIL_DIV(N, TILE_SIZE_N);
+        int num_block_n = blockIdx.x % CEIL_DIV(N, TILE_SIZE_N);
 
         #pragma nv_diag_suppress static_var_with_dynamic_init
         __shared__ barrier full[NUM_STAGES];  // Signals data is ready
@@ -164,7 +164,7 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
             uint32_t row = warp * 16 + lane / 4;
             
             // @note C is column-major
-            bf16* block_C = C + (num_block_m * TILE_SIZE_N * M) + (num_block_m * TILE_SIZE_M);
+            bf16* block_C = C + (num_block_n * TILE_SIZE_N * M) + (num_block_m * TILE_SIZE_M);
             
             for (int m_iter = 0; m_iter < rows_per_consumer_warp_group / WGMMA_M; m_iter++) {
                 int row_tile_base_C = (consumer_warp_group_idx * rows_per_consumer_warp_group) + (m_iter * WGMMA_M);
