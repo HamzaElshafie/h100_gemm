@@ -88,7 +88,7 @@ __device__ void warpgroup_wait() {
  * @note Accumulator floats per thread (per one WGMMA issue) = (WGMMA_M * WGMMA_N) / NUM_THREADS
  */
 template <int ScaleD, int ScaleA, int ScaleB, int TransA, int TransB>
-__device__ void wgmma32(float d[2][8], bf16* sharedA, bf16*sharedB) {
+__device__ __forceinline__ void wgmma32(float d[2][8], bf16* sharedA, bf16*sharedB) {
     uint64_t desc_a = make_smem_desc(&sharedA[0]);
     uint64_t desc_b = make_smem_desc(&sharedB[0]);
     asm volatile(
@@ -111,7 +111,7 @@ __device__ void wgmma32(float d[2][8], bf16* sharedA, bf16*sharedB) {
  * @note Accumulator floats per thread (per one WGMMA issue) = (WGMMA_M * WGMMA_N) / NUM_THREADS
  */
 template <int ScaleD, int ScaleA, int ScaleB, int TransA, int TransB>
-__device__ void wgmma64(float d[4][8], bf16 *sharedA, bf16 *sharedB)
+__device__ __forceinline__ void wgmma64(float d[4][8], bf16 *sharedA, bf16 *sharedB)
 {
     uint64_t desc_a = make_smem_desc(&sharedA[0]);
     uint64_t desc_b = make_smem_desc(&sharedB[0]);
@@ -140,7 +140,7 @@ __device__ void wgmma64(float d[4][8], bf16 *sharedA, bf16 *sharedB)
  * @note Accumulator floats per thread (per one WGMMA issue) = (WGMMA_M * WGMMA_N) / NUM_THREADS
  */
 template <int ScaleD, int ScaleA, int ScaleB, int TransA, int TransB>
-__device__ void wgmma128(float d[8][8], bf16 *sharedA, bf16 *sharedB) {
+__device__ __forceinline__ void wgmma128(float d[8][8], bf16 *sharedA, bf16 *sharedB) {
     uint64_t desc_a = make_smem_desc(&sharedA[0]);
     uint64_t desc_b = make_smem_desc(&sharedB[0]);
     asm volatile(
@@ -219,7 +219,7 @@ __device__ __forceinline__ void wgmma192(float d[12][8], bf16* sharedA, bf16* sh
  * @note Accumulator floats per thread (per one WGMMA issue) = (WGMMA_M * WGMMA_N) / NUM_THREADS
  */
 template <int ScaleD, int ScaleA, int ScaleB, int TransA, int TransB>
-__device__ void wgmma256(float d[16][8], bf16* sharedA, bf16* sharedB) {
+__device__ __forceinline__ void wgmma256(float d[16][8], bf16* sharedA, bf16* sharedB) {
     uint64_t desc_a = make_smem_desc(&sharedA[0]);
     uint64_t desc_b = make_smem_desc(&sharedB[0]);
     asm volatile(
@@ -269,7 +269,7 @@ __device__ void wgmma256(float d[16][8], bf16* sharedA, bf16* sharedB) {
  * Compile-time dispatcher that selects the correct WGMMA instruction variant based on WGMMA_N and forwards all MMA parameters.
  */
 template <int WGMMA_N, int ScaleD, int ScaleA, int ScaleB, int TransA, int TransB>
-__device__ inline void wgmma(float d[WGMMA_N / 16][8], bf16 *sharedA, bf16 *sharedB){
+__device__ __forceinline__ void wgmma(float d[WGMMA_N / 16][8], bf16 *sharedA, bf16 *sharedB){
     if constexpr (WGMMA_N == 32) {wgmma32<ScaleD, ScaleA, ScaleB, TransA, TransB>(d, sharedA, sharedB);}
     if constexpr (WGMMA_N == 64){wgmma64<ScaleD, ScaleA, ScaleB, TransA, TransB>(d, sharedA, sharedB);}
     if constexpr (WGMMA_N == 128){wgmma128<ScaleD, ScaleA, ScaleB, TransA, TransB>(d, sharedA, sharedB);}

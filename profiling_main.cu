@@ -21,6 +21,10 @@
 #include <type_traits>
 #include "utils.h"
 
+// Alias for simplicity
+using bf16 = __nv_bfloat16;
+using barrier = cuda::barrier<cuda::thread_scope_block>;
+namespace cde = cuda::device::experimental;
 
 /**
  * @brief Creates a CUDA tensor map descriptor for TMA operations.
@@ -147,19 +151,16 @@ __device__ inline void wgmma(float d[WGMMA_N / 16][8], bf16 *sharedA, bf16 *shar
     if constexpr (WGMMA_N == 128){wgmma128<ScaleD, ScaleA, ScaleB, TransA, TransB>(d, sharedA, sharedB);}
 }
 
-
-/**
- * @brief Shared memory structure for producer-consumer pipeline kernel
- */
 template <int TILE_SIZE_M, int TILE_SIZE_K, int TILE_SIZE_N, int NUM_STAGES>
 struct Smem {
     alignas(128) bf16 A[TILE_SIZE_M * TILE_SIZE_K * NUM_STAGES];
     alignas(128) bf16 B[TILE_SIZE_K * TILE_SIZE_N * NUM_STAGES];
+
+    static constexpr int TILE_M_PAD = TILE_SIZE_M + 8;
+    // Epilogue staging tile (padded)
+    alignas(128) bf16 C_epi[TILE_M_PAD * TILE_SIZE_N];
 };
 
-/**
- * @brief Producer-consumer pipeline GEMM kernel
- */
 template <const int TILE_SIZE_M, const int TILE_SIZE_K, const int TILE_SIZE_N,
           const int WGMMA_M, const int WGMMA_N, const int WGMMA_K, const int NUM_THREADS,
           const int NUM_STAGES = 2>
@@ -178,6 +179,8 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
         Smem<TILE_SIZE_M, TILE_SIZE_K, TILE_SIZE_N, NUM_STAGES> &s =
             *reinterpret_cast<Smem<TILE_SIZE_M, TILE_SIZE_K, TILE_SIZE_N, NUM_STAGES>*>(smem_raw);
 
+        constexpr int TILE_M_PAD = Smem<TILE_SIZE_M, TILE_SIZE_K, TILE_SIZE_N, NUM_STAGES>::TILE_M_PAD;
+
         constexpr int A_stage_size = TILE_SIZE_M * TILE_SIZE_K;
         constexpr int B_stage_size = TILE_SIZE_K * TILE_SIZE_N;
 
@@ -189,6 +192,7 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
         bool is_producer = (warp_group_idx == 0);
 
         // How many M rows of the output tile each 'consumer' warp group is responsible for
+        // @example: TILE_SIZE_M = 128, num_consumer_groups = 1 -> 128 rows; num_consumer_groups = 2 -> 64 rows each
         constexpr int rows_per_consumer_warp_group = TILE_SIZE_M / num_consumer_groups;
 
         // Consumer warp group index (0-indexed among consumers only)
@@ -255,6 +259,8 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
             
         } else {
             // Consumer warp groups: Execute WGMMA compute
+            // Accumulator registers - declared inside consumer branch only so
+            // ptxas doesn't allocate them for the producer warp group
             float d[TILE_SIZE_M / WGMMA_M / num_consumer_groups][WGMMA_N / 16][8];
             memset(d, 0, sizeof(d));
 
@@ -302,27 +308,83 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
             
             // @note C is column-major
             bf16* block_C = C + (num_block_n * TILE_SIZE_N * M) + (num_block_m * TILE_SIZE_M);
+
+            // Helpers
+            #define IDX_GMEM(r, c) ((c) * M + (r))
+            #define IDX_SMEM(r,c) ((c) * TILE_M_PAD + (r))
             
             for (int m_iter = 0; m_iter < rows_per_consumer_warp_group / WGMMA_M; m_iter++) {
                 int row_tile_base_C = (consumer_warp_group_idx * rows_per_consumer_warp_group) + (m_iter * WGMMA_M);
                 
                 for (int w = 0; w < WGMMA_N / 16; w++) {
                     int col = 16 * w + 2 * (tid % 4);
-                    #define IDX(r, c) ((c) * M + ((r) + row_tile_base_C))
+                    
+                    int r0 = row + row_tile_base_C;
+                    int r8 = row + 8 + row_tile_base_C;
 
-                    // Apply alpha scaling to accumulator results and add beta*C
-                    block_C[IDX(row, col)] = __float2bfloat16(alpha * d[m_iter][w][0] + beta * __bfloat162float(block_C[IDX(row, col)]));
-                    block_C[IDX(row, col + 1)] = __float2bfloat16(alpha * d[m_iter][w][1] + beta * __bfloat162float(block_C[IDX(row, col + 1)]));
-                    block_C[IDX(row + 8, col)] = __float2bfloat16(alpha * d[m_iter][w][2] + beta * __bfloat162float(block_C[IDX(row + 8, col)]));
-                    block_C[IDX(row + 8, col + 1)] = __float2bfloat16(alpha * d[m_iter][w][3] + beta * __bfloat162float(block_C[IDX(row + 8, col + 1)]));
+                    s.C_epi[IDX_SMEM(r0, col + 0)] = __float2bfloat16(alpha * d[m_iter][w][0]);
+                    s.C_epi[IDX_SMEM(r0, col + 1)] = __float2bfloat16(alpha * d[m_iter][w][1]);
+                    s.C_epi[IDX_SMEM(r8, col + 0)] = __float2bfloat16(alpha * d[m_iter][w][2]);
+                    s.C_epi[IDX_SMEM(r8, col + 1)] = __float2bfloat16(alpha * d[m_iter][w][3]);
 
-                    block_C[IDX(row, col + 8)] = __float2bfloat16(alpha * d[m_iter][w][4] + beta * __bfloat162float(block_C[IDX(row, col + 8)]));
-                    block_C[IDX(row, col + 9)] = __float2bfloat16(alpha * d[m_iter][w][5] + beta * __bfloat162float(block_C[IDX(row, col + 9)]));
-                    block_C[IDX(row + 8, col + 8)] = __float2bfloat16(alpha * d[m_iter][w][6] + beta * __bfloat162float(block_C[IDX(row + 8, col + 8)]));
-                    block_C[IDX(row + 8, col + 9)] = __float2bfloat16(alpha * d[m_iter][w][7] + beta * __bfloat162float(block_C[IDX(row + 8, col + 9)]));
+                    s.C_epi[IDX_SMEM(r0, col + 8)] = __float2bfloat16(alpha * d[m_iter][w][4]);
+                    s.C_epi[IDX_SMEM(r0, col + 9)] = __float2bfloat16(alpha * d[m_iter][w][5]);
+                    s.C_epi[IDX_SMEM(r8, col + 8)] = __float2bfloat16(alpha * d[m_iter][w][6]);
+                    s.C_epi[IDX_SMEM(r8, col + 9)] = __float2bfloat16(alpha * d[m_iter][w][7]);
+                }
+            }
+            __syncthreads();
+
+            // Phase 2: coalesced + vectorised (8B) global write (and optional beta RMW)
+
+            int row4_in_group   = lane * 4;
+            int group_base_row  = consumer_warp_group_idx * rows_per_consumer_warp_group;
+
+            if (row4_in_group < rows_per_consumer_warp_group) {
+                int r0 = group_base_row + row4_in_group;
+
+                // We will treat 4 consecutive bf16 as one 8-byte chunk
+                auto smem_u64 = [&](int r, int c) -> uint64_t* {
+                    return reinterpret_cast<uint64_t*>(&s.C_epi[IDX_SMEM(r, c)]);
+                };
+                auto gmem_u64 = [&](int r, int c) -> uint64_t* {
+                    return reinterpret_cast<uint64_t*>(&block_C[IDX_GMEM(r, c)]);
+                };
+
+                for (int col_base = 0; col_base < TILE_SIZE_N; col_base += 4) {
+                    int c = col_base + warp;
+                    if (c < TILE_SIZE_N) {
+
+                        // Vector load 4 bf16 from smem
+                        uint64_t v_pack = *smem_u64(r0, c);
+
+                        if (beta != 0.0f) {
+                            // Vector load 4 bf16 from gmem
+                            uint64_t o_pack = *gmem_u64(r0, c);
+
+                            // Unpack to bf16[4] so we can do beta in fp32
+                            bf16* v = reinterpret_cast<bf16*>(&v_pack);
+                            bf16* o = reinterpret_cast<bf16*>(&o_pack);
+
+                            float f0 = __bfloat162float(v[0]) + beta * __bfloat162float(o[0]);
+                            float f1 = __bfloat162float(v[1]) + beta * __bfloat162float(o[1]);
+                            float f2 = __bfloat162float(v[2]) + beta * __bfloat162float(o[2]);
+                            float f3 = __bfloat162float(v[3]) + beta * __bfloat162float(o[3]);
+
+                            v[0] = __float2bfloat16(f0);
+                            v[1] = __float2bfloat16(f1);
+                            v[2] = __float2bfloat16(f2);
+                            v[3] = __float2bfloat16(f3);
+                        }
+
+                        // Vector store 4 bf16 to gmem
+                        *gmem_u64(r0, c) = v_pack;
+                    }
                 }
             }
         }
+        #undef IDX_GMEM
+        #undef IDX_SMEM
 }
 
 /**

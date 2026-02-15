@@ -1,3 +1,0 @@
-/workspace/h100_gemm/build/CMakeFiles/gemm.dir
-/workspace/h100_gemm/build/CMakeFiles/edit_cache.dir
-/workspace/h100_gemm/build/CMakeFiles/rebuild_cache.dir
