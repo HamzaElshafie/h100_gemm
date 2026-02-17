@@ -125,13 +125,13 @@ namespace hopper {
     void run_gemm_bf16_pc_pipeline(const bf16* __restrict__ A, const bf16* __restrict__ B, bf16* __restrict__ C,
                                  int M, int N, int K, float alpha, float beta) {
         constexpr int TILE_SIZE_M = 128;
-        constexpr int TILE_SIZE_N = 128;
+        constexpr int TILE_SIZE_N = 256;
         constexpr int TILE_SIZE_K = 64;
-        constexpr int NUM_THREADS = 128 * 2;
-        constexpr int NUM_STAGES = 5;
+        constexpr int NUM_THREADS = 128 * 3;
+        constexpr int NUM_STAGES = 3;
         constexpr int WGMMA_M = 64;
         constexpr int WGMMA_K = 16;
-        constexpr int WGMMA_N = 128;
+        constexpr int WGMMA_N = 256;
 
         if (!d_tma_map_A || M != _prev_m || N != _prev_n || K != _prev_k) {
             d_tma_map_A = create_and_allocate_tensor_map<TILE_SIZE_M, TILE_SIZE_K>(

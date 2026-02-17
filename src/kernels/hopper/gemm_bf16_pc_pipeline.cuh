@@ -26,7 +26,7 @@ struct Smem {
 
 template <const int TILE_SIZE_M, const int TILE_SIZE_K, const int TILE_SIZE_N,
           const int WGMMA_M, const int WGMMA_N, const int WGMMA_K, const int NUM_THREADS,
-          const int NUM_STAGES = 2>
+          const int NUM_STAGES = 5>
 __global__ void __launch_bounds__(NUM_THREADS)
 gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
     int M, int K, int N, float alpha, float beta) {
