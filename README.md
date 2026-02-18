@@ -15,7 +15,7 @@ A high-performance GEMM (General Matrix Multiply) implementation optimised for H
 | Warp Tiling | 41.4 / 31.5 | 79.8 | 4.3 |
 | Tensor Cores (Async TMA + WGMMA) | NA / 280.4 | NA | 37.8 |
 | WGMMA Shape Exploration | NA / 407.7 | NA | 56.9 |
-| In Progress 🚧 | NA | NA | NA |
+| Producer-Consumer Pipeline (Epilogue SMEM Staging) | NA / 463.9 | NA | 63.1 |
 | **cuBLAS** | **51.5 / 739.8** | **100%** | **100%** |
 
 
@@ -114,6 +114,7 @@ replace `general` with your implementation (`general`/`hopper`/`cublas`) and `0`
 - [Inside NVIDIA GPUs: Anatomy of high performance matmul kernels](https://www.aleksagordic.com/blog/matmul#cpt1)
 - [Outperforming cuBLAS on H100: a Worklog](https://cudaforfun.substack.com/p/outperforming-cublas-on-h100-a-worklog)
 - [How to Optimize a CUDA Matmul Kernel for cuBLAS-like Performance: a Worklog](https://siboehm.com/articles/22/CUDA-MMM)
+
 
 
 
