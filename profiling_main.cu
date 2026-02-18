@@ -163,7 +163,7 @@ struct Smem {
 
 template <const int TILE_SIZE_M, const int TILE_SIZE_K, const int TILE_SIZE_N,
           const int WGMMA_M, const int WGMMA_N, const int WGMMA_K, const int NUM_THREADS,
-          const int NUM_STAGES = 2>
+          const int NUM_STAGES = 5>
 __global__ void __launch_bounds__(NUM_THREADS)
 gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
     int M, int K, int N, float alpha, float beta) {
@@ -300,91 +300,50 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
                 barrier::arrival_token empty_token = empty[stage].arrive();
             }
 
-            // Epilogue: Store results
-            int tid = threadIdx.x % 128;
+            int tid  = threadIdx.x % 128;
             int lane = tid % 32;
             int warp = tid / 32;
             uint32_t row = warp * 16 + lane / 4;
-            
+
             // @note C is column-major
             bf16* block_C = C + (num_block_n * TILE_SIZE_N * M) + (num_block_m * TILE_SIZE_M);
 
-            // Helpers
+            constexpr int TILE_M_PAD = TILE_SIZE_M + 8;
             #define IDX_GMEM(r, c) ((c) * M + (r))
-            #define IDX_SMEM(r,c) ((c) * TILE_M_PAD + (r))
-            
+            #define IDX_SMEM(r, c) ((c) * TILE_M_PAD + (r))
+
+            // Phase 1: alpha-scaled accumulators -> shared staging tile
             for (int m_iter = 0; m_iter < rows_per_consumer_warp_group / WGMMA_M; m_iter++) {
                 int row_tile_base_C = (consumer_warp_group_idx * rows_per_consumer_warp_group) + (m_iter * WGMMA_M);
-                
                 for (int w = 0; w < WGMMA_N / 16; w++) {
                     int col = 16 * w + 2 * (tid % 4);
-                    
-                    int r0 = row + row_tile_base_C;
-                    int r8 = row + 8 + row_tile_base_C;
-
-                    s.C_epi[IDX_SMEM(r0, col + 0)] = __float2bfloat16(alpha * d[m_iter][w][0]);
-                    s.C_epi[IDX_SMEM(r0, col + 1)] = __float2bfloat16(alpha * d[m_iter][w][1]);
-                    s.C_epi[IDX_SMEM(r8, col + 0)] = __float2bfloat16(alpha * d[m_iter][w][2]);
-                    s.C_epi[IDX_SMEM(r8, col + 1)] = __float2bfloat16(alpha * d[m_iter][w][3]);
-
-                    s.C_epi[IDX_SMEM(r0, col + 8)] = __float2bfloat16(alpha * d[m_iter][w][4]);
-                    s.C_epi[IDX_SMEM(r0, col + 9)] = __float2bfloat16(alpha * d[m_iter][w][5]);
-                    s.C_epi[IDX_SMEM(r8, col + 8)] = __float2bfloat16(alpha * d[m_iter][w][6]);
-                    s.C_epi[IDX_SMEM(r8, col + 9)] = __float2bfloat16(alpha * d[m_iter][w][7]);
+                    s.C_epi[IDX_SMEM(row + row_tile_base_C, col)] = __float2bfloat16(alpha * d[m_iter][w][0]);
+                    s.C_epi[IDX_SMEM(row + row_tile_base_C, col + 1)] = __float2bfloat16(alpha * d[m_iter][w][1]);
+                    s.C_epi[IDX_SMEM(row + 8 + row_tile_base_C, col)] = __float2bfloat16(alpha * d[m_iter][w][2]);
+                    s.C_epi[IDX_SMEM(row + 8 + row_tile_base_C, col + 1)] = __float2bfloat16(alpha * d[m_iter][w][3]);
+                    s.C_epi[IDX_SMEM(row + row_tile_base_C, col + 8)] = __float2bfloat16(alpha * d[m_iter][w][4]);
+                    s.C_epi[IDX_SMEM(row + row_tile_base_C, col + 9)] = __float2bfloat16(alpha * d[m_iter][w][5]);
+                    s.C_epi[IDX_SMEM(row + 8 + row_tile_base_C, col + 8)] = __float2bfloat16(alpha * d[m_iter][w][6]);
+                    s.C_epi[IDX_SMEM(row + 8 + row_tile_base_C, col + 9)] = __float2bfloat16(alpha * d[m_iter][w][7]);
                 }
             }
             __syncthreads();
 
-            // Phase 2: coalesced + vectorised (8B) global write (and optional beta RMW)
-
-            int row4_in_group   = lane * 4;
-            int group_base_row  = consumer_warp_group_idx * rows_per_consumer_warp_group;
-
+            // Phase 2: coalesced write to GMEM (alpha*D + beta*C)
+            int row4_in_group = lane * 4;
+            int group_base_row = consumer_warp_group_idx * rows_per_consumer_warp_group;
             if (row4_in_group < rows_per_consumer_warp_group) {
                 int r0 = group_base_row + row4_in_group;
-
-                // We will treat 4 consecutive bf16 as one 8-byte chunk
-                auto smem_u64 = [&](int r, int c) -> uint64_t* {
-                    return reinterpret_cast<uint64_t*>(&s.C_epi[IDX_SMEM(r, c)]);
-                };
-                auto gmem_u64 = [&](int r, int c) -> uint64_t* {
-                    return reinterpret_cast<uint64_t*>(&block_C[IDX_GMEM(r, c)]);
-                };
-
-                for (int col_base = 0; col_base < TILE_SIZE_N; col_base += 4) {
-                    int c = col_base + warp;
-                    if (c < TILE_SIZE_N) {
-
-                        // Vector load 4 bf16 from smem
-                        uint64_t v_pack = *smem_u64(r0, c);
-
-                        if (beta != 0.0f) {
-                            // Vector load 4 bf16 from gmem
-                            uint64_t o_pack = *gmem_u64(r0, c);
-
-                            // Unpack to bf16[4] so we can do beta in fp32
-                            bf16* v = reinterpret_cast<bf16*>(&v_pack);
-                            bf16* o = reinterpret_cast<bf16*>(&o_pack);
-
-                            float f0 = __bfloat162float(v[0]) + beta * __bfloat162float(o[0]);
-                            float f1 = __bfloat162float(v[1]) + beta * __bfloat162float(o[1]);
-                            float f2 = __bfloat162float(v[2]) + beta * __bfloat162float(o[2]);
-                            float f3 = __bfloat162float(v[3]) + beta * __bfloat162float(o[3]);
-
-                            v[0] = __float2bfloat16(f0);
-                            v[1] = __float2bfloat16(f1);
-                            v[2] = __float2bfloat16(f2);
-                            v[3] = __float2bfloat16(f3);
-                        }
-
-                        // Vector store 4 bf16 to gmem
-                        *gmem_u64(r0, c) = v_pack;
-                    }
+                for (int c = warp; c < TILE_SIZE_N; c += 4) {
+                    block_C[IDX_GMEM(r0 + 0, c)] = __float2bfloat16(__bfloat162float(s.C_epi[IDX_SMEM(r0 + 0, c)]) + beta * __bfloat162float(block_C[IDX_GMEM(r0 + 0, c)]));
+                    block_C[IDX_GMEM(r0 + 1, c)] = __float2bfloat16(__bfloat162float(s.C_epi[IDX_SMEM(r0 + 1, c)]) + beta * __bfloat162float(block_C[IDX_GMEM(r0 + 1, c)]));
+                    block_C[IDX_GMEM(r0 + 2, c)] = __float2bfloat16(__bfloat162float(s.C_epi[IDX_SMEM(r0 + 2, c)]) + beta * __bfloat162float(block_C[IDX_GMEM(r0 + 2, c)]));
+                    block_C[IDX_GMEM(r0 + 3, c)] = __float2bfloat16(__bfloat162float(s.C_epi[IDX_SMEM(r0 + 3, c)]) + beta * __bfloat162float(block_C[IDX_GMEM(r0 + 3, c)]));
                 }
             }
+            #undef IDX_GMEM
+            #undef IDX_SMEM
         }
-        #undef IDX_GMEM
-        #undef IDX_SMEM
 }
 
 /**
