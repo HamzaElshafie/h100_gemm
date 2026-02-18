@@ -79,6 +79,8 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
         __syncthreads();
 
         if (is_producer) {
+            constexpr int num_regs_producer = (num_consumer_groups <= 2 ? 24 : 32);
+            warpgroup_reg_dealloc<num_regs_producer>();
             // Producer warp group: Issues TMA loads
             if (threadIdx.x == 0) {
                 // Fill the pipeline
@@ -121,6 +123,8 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
             }
             
         } else {
+            constexpr int num_regs_consumer = (num_consumer_groups == 1 ? 256 : (num_consumer_groups == 2 ? 240 : 160));
+            warpgroup_reg_alloc<num_regs_consumer>();
             // Consumer warp groups: Execute WGMMA compute
             // Accumulator registers - declared inside consumer branch only so
             // ptxas doesn't allocate them for the producer warp group

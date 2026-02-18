@@ -110,7 +110,7 @@ __device__ void warpgroup_wait() {
 }
 
 template <int ScaleD, int ScaleA, int ScaleB, int TransA, int TransB>
-__device__ void wgmma128(float d[8][8], bf16 *sharedA, bf16 *sharedB) {
+__device__ __forceinline__ void wgmma128(float d[8][8], bf16 *sharedA, bf16 *sharedB) {
     uint64_t desc_a = make_smem_desc(&sharedA[0]);
     uint64_t desc_b = make_smem_desc(&sharedB[0]);
     asm volatile(
@@ -147,7 +147,7 @@ __device__ void wgmma128(float d[8][8], bf16 *sharedA, bf16 *sharedB) {
  * Compile-time dispatcher that selects the correct WGMMA instruction variant based on WGMMA_N.
  */
 template <int WGMMA_N, int ScaleD, int ScaleA, int ScaleB, int TransA, int TransB>
-__device__ inline void wgmma(float d[WGMMA_N / 16][8], bf16 *sharedA, bf16 *sharedB){
+__device__ __forceinline__ void wgmma(float d[WGMMA_N / 16][8], bf16 *sharedA, bf16 *sharedB){
     if constexpr (WGMMA_N == 128){wgmma128<ScaleD, ScaleA, ScaleB, TransA, TransB>(d, sharedA, sharedB);}
 }
 
@@ -155,10 +155,6 @@ template <int TILE_SIZE_M, int TILE_SIZE_K, int TILE_SIZE_N, int NUM_STAGES>
 struct Smem {
     alignas(128) bf16 A[TILE_SIZE_M * TILE_SIZE_K * NUM_STAGES];
     alignas(128) bf16 B[TILE_SIZE_K * TILE_SIZE_N * NUM_STAGES];
-
-    static constexpr int TILE_M_PAD = TILE_SIZE_M + 8;
-    // Epilogue staging tile (padded)
-    alignas(128) bf16 C_epi[TILE_M_PAD * TILE_SIZE_N];
 };
 
 template <const int TILE_SIZE_M, const int TILE_SIZE_K, const int TILE_SIZE_N,
@@ -166,7 +162,7 @@ template <const int TILE_SIZE_M, const int TILE_SIZE_K, const int TILE_SIZE_N,
           const int NUM_STAGES = 5>
 __global__ void __launch_bounds__(NUM_THREADS)
 gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
-    int M, int K, int N, float alpha, float beta) {
+    int M, int K, int N) {
         static_assert(WGMMA_N == TILE_SIZE_N, "WGMMA_N must be == TILE_SIZE_N");
         static_assert(TILE_SIZE_M % WGMMA_M == 0, "TILE_SIZE_M must be divisible by WGMMA_M");
         static_assert(TILE_SIZE_K % WGMMA_K == 0, "TILE_SIZE_K must be divisible by WGMMA_K");
@@ -178,8 +174,6 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
         extern __shared__ __align__(128) uint8_t smem_raw[];
         Smem<TILE_SIZE_M, TILE_SIZE_K, TILE_SIZE_N, NUM_STAGES> &s =
             *reinterpret_cast<Smem<TILE_SIZE_M, TILE_SIZE_K, TILE_SIZE_N, NUM_STAGES>*>(smem_raw);
-
-        constexpr int TILE_M_PAD = Smem<TILE_SIZE_M, TILE_SIZE_K, TILE_SIZE_N, NUM_STAGES>::TILE_M_PAD;
 
         constexpr int A_stage_size = TILE_SIZE_M * TILE_SIZE_K;
         constexpr int B_stage_size = TILE_SIZE_K * TILE_SIZE_N;
@@ -305,102 +299,99 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
             int warp = tid / 32;
             uint32_t row = warp * 16 + lane / 4;
 
-            // @note C is column-major
+            // @note C is column-major; epilogue with no alpha/beta (C = A*B only)
             bf16* block_C = C + (num_block_n * TILE_SIZE_N * M) + (num_block_m * TILE_SIZE_M);
+            #define IDX(i, j) ((j) * M + ((i) + yo))
 
-            constexpr int TILE_M_PAD = TILE_SIZE_M + 8;
-            #define IDX_GMEM(r, c) ((c) * M + (r))
-            #define IDX_SMEM(r, c) ((c) * TILE_M_PAD + (r))
-
-            // Phase 1: alpha-scaled accumulators -> shared staging tile
+            #pragma unroll
             for (int m_iter = 0; m_iter < rows_per_consumer_warp_group / WGMMA_M; m_iter++) {
-                int row_tile_base_C = (consumer_warp_group_idx * rows_per_consumer_warp_group) + (m_iter * WGMMA_M);
+                int yo = (consumer_warp_group_idx * rows_per_consumer_warp_group) + (m_iter * WGMMA_M);
+                #pragma unroll
                 for (int w = 0; w < WGMMA_N / 16; w++) {
                     int col = 16 * w + 2 * (tid % 4);
-                    s.C_epi[IDX_SMEM(row + row_tile_base_C, col)] = __float2bfloat16(alpha * d[m_iter][w][0]);
-                    s.C_epi[IDX_SMEM(row + row_tile_base_C, col + 1)] = __float2bfloat16(alpha * d[m_iter][w][1]);
-                    s.C_epi[IDX_SMEM(row + 8 + row_tile_base_C, col)] = __float2bfloat16(alpha * d[m_iter][w][2]);
-                    s.C_epi[IDX_SMEM(row + 8 + row_tile_base_C, col + 1)] = __float2bfloat16(alpha * d[m_iter][w][3]);
-                    s.C_epi[IDX_SMEM(row + row_tile_base_C, col + 8)] = __float2bfloat16(alpha * d[m_iter][w][4]);
-                    s.C_epi[IDX_SMEM(row + row_tile_base_C, col + 9)] = __float2bfloat16(alpha * d[m_iter][w][5]);
-                    s.C_epi[IDX_SMEM(row + 8 + row_tile_base_C, col + 8)] = __float2bfloat16(alpha * d[m_iter][w][6]);
-                    s.C_epi[IDX_SMEM(row + 8 + row_tile_base_C, col + 9)] = __float2bfloat16(alpha * d[m_iter][w][7]);
+                    block_C[IDX(row, col)] = (d[m_iter][w][0]);
+                    block_C[IDX(row, col+1)] = (d[m_iter][w][1]);
+                    block_C[IDX(row+8, col)] = (d[m_iter][w][2]);
+                    block_C[IDX(row+8, col+1)] = (d[m_iter][w][3]);
+                    block_C[IDX(row, col+8)] = (d[m_iter][w][4]);
+                    block_C[IDX(row, col+9)] = (d[m_iter][w][5]);
+                    block_C[IDX(row+8, col+8)] = (d[m_iter][w][6]);
+                    block_C[IDX(row+8, col+9)] = (d[m_iter][w][7]);
                 }
             }
-            __syncthreads();
-
-            // Phase 2: coalesced write to GMEM (alpha*D + beta*C)
-            int row4_in_group = lane * 4;
-            int group_base_row = consumer_warp_group_idx * rows_per_consumer_warp_group;
-            if (row4_in_group < rows_per_consumer_warp_group) {
-                int r0 = group_base_row + row4_in_group;
-                for (int c = warp; c < TILE_SIZE_N; c += 4) {
-                    block_C[IDX_GMEM(r0 + 0, c)] = __float2bfloat16(__bfloat162float(s.C_epi[IDX_SMEM(r0 + 0, c)]) + beta * __bfloat162float(block_C[IDX_GMEM(r0 + 0, c)]));
-                    block_C[IDX_GMEM(r0 + 1, c)] = __float2bfloat16(__bfloat162float(s.C_epi[IDX_SMEM(r0 + 1, c)]) + beta * __bfloat162float(block_C[IDX_GMEM(r0 + 1, c)]));
-                    block_C[IDX_GMEM(r0 + 2, c)] = __float2bfloat16(__bfloat162float(s.C_epi[IDX_SMEM(r0 + 2, c)]) + beta * __bfloat162float(block_C[IDX_GMEM(r0 + 2, c)]));
-                    block_C[IDX_GMEM(r0 + 3, c)] = __float2bfloat16(__bfloat162float(s.C_epi[IDX_SMEM(r0 + 3, c)]) + beta * __bfloat162float(block_C[IDX_GMEM(r0 + 3, c)]));
-                }
-            }
-            #undef IDX_GMEM
-            #undef IDX_SMEM
+            #undef IDX
         }
 }
 
+  void run_gemm_cublas_bf16(const __nv_bfloat16* __restrict__ A,
+                                const __nv_bfloat16* __restrict__ B,
+                                __nv_bfloat16* __restrict__ C,
+                                int M, int N, int K, cublasHandle_t handle) {
+        // No alpha/beta scaling: C = A*B (alpha=1, beta=0). Same layout as kernel.
+        const float alpha = 1.0f;
+        const float beta = 0.0f;
+        CUBLAS_CHECK(cublasGemmEx(
+            handle,
+            CUBLAS_OP_N, CUBLAS_OP_N,
+            /* m */ K, /* n */ M, /* k */ N,
+            &alpha,
+            /* B */ B, CUDA_R_16BF, /* ldb */ K,   // B[K x N]
+            /* A */ A, CUDA_R_16BF, /* lda */ N,   // A[N x M]
+            &beta,
+            /* C */ C, CUDA_R_16BF, /* ldc */ K,   // C[K x M] in column-major == C[M x K] row-major
+            CUBLAS_COMPUTE_32F,
+            CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+        CUDA_CHECK(cudaDeviceSynchronize());
+    }
+
 /**
- * @brief Main entry point for the profiling program (gemm_bf16_pc_pipeline only).
+ * @brief Main entry point: benchmarks gemm_bf16_pc_pipeline like main.cu (TFLOPs, relative to cuBLAS).
  */
 int main(int argc, char** argv) {
     ResourceManager<bf16> resources;
 
-    // Fixed size for profiling
-    const int size = 8192;
-    const float alpha = 0.5f;
-    const float beta = 3.0f;
-    
-    const size_t mem_size = size * size * sizeof(bf16);
+    std::vector<int> sizes = {512, 1024, 2048, 4096, 8192};
+    int max_size = sizes.back();
+    size_t mem_size = static_cast<size_t>(max_size) * static_cast<size_t>(max_size) * sizeof(bf16);
 
-    std::cout << "Profiling gemm_bf16_pc_pipeline kernel with matrix size " << size << "x" << size << std::endl;
+    cublasHandle_t handle;
+    if (cublasCreate(&handle) != CUBLAS_STATUS_SUCCESS) {
+        std::cerr << "cublasCreate failed." << std::endl;
+        return -1;
+    }
+    resources.set_cublas_handle(&handle);
 
-    // Allocate host memory
+    cudaEvent_t start;
+    cudaEvent_t stop;
+    CUDA_CHECK(cudaEventCreate(&start));
+    CUDA_CHECK(cudaEventCreate(&stop));
+    resources.add_event(start);
+    resources.add_event(stop);
+
     bf16* A_host = (bf16*)malloc(mem_size);
     bf16* B_host = (bf16*)malloc(mem_size);
     bf16* C_host = (bf16*)malloc(mem_size);
-
-    // Register host memory with resource manager
     resources.add_host_ptr(A_host);
     resources.add_host_ptr(B_host);
     resources.add_host_ptr(C_host);
-
     if (!A_host || !B_host || !C_host) {
         std::cerr << "Host memory allocation failed" << std::endl;
         return -1;
     }
 
-    // Initialise matrices
     bf16* matrices[] = {A_host, B_host, C_host};
-    initialiseArrays<bf16>(matrices, 3, size * size, -100.0f, 100.0f, 0);
+    initialiseArrays<bf16>(matrices, 3, static_cast<size_t>(max_size) * max_size, -1.0f, 1.0f, 0);
 
-    // Allocate device memory
     bf16* A_device;
     bf16* B_device;
     bf16* C_device;
-
     CUDA_CHECK(cudaMalloc((void**)&A_device, mem_size));
     CUDA_CHECK(cudaMalloc((void**)&B_device, mem_size));
     CUDA_CHECK(cudaMalloc((void**)&C_device, mem_size));
-
     resources.add_device_ptr(A_device);
     resources.add_device_ptr(B_device);
     resources.add_device_ptr(C_device);
 
-    // Copy data from host to device
-    CUDA_CHECK(cudaMemcpy(A_device, A_host, mem_size, cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(B_device, B_host, mem_size, cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(C_device, C_host, mem_size, cudaMemcpyHostToDevice));
-
-    std::cout << "Memory allocation and data transfer completed" << std::endl;
-
-    // Kernel launch configuration
     constexpr int TILE_SIZE_M = 128;
     constexpr int TILE_SIZE_N = 128;
     constexpr int TILE_SIZE_K = 64;
@@ -410,16 +401,6 @@ int main(int argc, char** argv) {
     constexpr int WGMMA_K = 16;
     constexpr int WGMMA_N = 128;
 
-    // Create tensor maps
-    CUtensorMap* d_tma_map_A = create_and_allocate_tensor_map<TILE_SIZE_M, TILE_SIZE_K>(
-        A_device, CEIL_DIV(size, TILE_SIZE_M), CEIL_DIV(size, TILE_SIZE_K));
-    CUtensorMap* d_tma_map_B = create_and_allocate_tensor_map<TILE_SIZE_N, TILE_SIZE_K>(
-        B_device, CEIL_DIV(size, TILE_SIZE_N), CEIL_DIV(size, TILE_SIZE_K));
-
-    resources.add_device_ptr(reinterpret_cast<bf16*>(d_tma_map_A));
-    resources.add_device_ptr(reinterpret_cast<bf16*>(d_tma_map_B));
-
-    // Configure kernel
     auto* kernel = gemm_bf16_pc_pipeline<
         TILE_SIZE_M, TILE_SIZE_K, TILE_SIZE_N,
         WGMMA_M, WGMMA_N, WGMMA_K, NUM_THREADS, NUM_STAGES>;
@@ -427,26 +408,69 @@ int main(int argc, char** argv) {
     CUDA_CHECK(cudaFuncSetAttribute(
         kernel,
         cudaFuncAttributeMaxDynamicSharedMemorySize, sMemSize));
-
-    // Grid dimensions
-    dim3 grid((size / TILE_SIZE_M) * (size / TILE_SIZE_N));
     dim3 block(NUM_THREADS);
 
-    // Warm-up launches
-    std::cout << "Running warm-up launches..." << std::endl;
-    for (int i = 0; i < 2; ++i) {
-        kernel<<<grid, block, sMemSize>>>(d_tma_map_A, d_tma_map_B, C_device, size, size, size, alpha, beta);
+    const int repeat = 50;
+    float elapsed_time;
+
+    for (int size : sizes) {
+        int M = size;
+        int N = size;
+        int K = size;
+        size_t curr_mem_size = static_cast<size_t>(size) * static_cast<size_t>(size) * sizeof(bf16);
+
+        CUDA_CHECK(cudaMemcpy(A_device, A_host, curr_mem_size, cudaMemcpyHostToDevice));
+        CUDA_CHECK(cudaMemcpy(B_device, B_host, curr_mem_size, cudaMemcpyHostToDevice));
+        CUDA_CHECK(cudaMemcpy(C_device, C_host, curr_mem_size, cudaMemcpyHostToDevice));
+
+        CUtensorMap* d_tma_map_A = create_and_allocate_tensor_map<TILE_SIZE_M, TILE_SIZE_K>(
+            A_device, CEIL_DIV(size, TILE_SIZE_M), CEIL_DIV(size, TILE_SIZE_K));
+        CUtensorMap* d_tma_map_B = create_and_allocate_tensor_map<TILE_SIZE_N, TILE_SIZE_K>(
+            B_device, CEIL_DIV(size, TILE_SIZE_N), CEIL_DIV(size, TILE_SIZE_K));
+
+        dim3 grid((size / TILE_SIZE_M) * (size / TILE_SIZE_N));
+
+        // FLOPs for C = A*B (no alpha/beta)
+        double flops_per_run = 2.0 * static_cast<double>(M) * static_cast<double>(N) * static_cast<double>(K);
+
+        // Warmup cuBLAS
+        run_gemm_cublas_bf16(A_device, B_device, C_device, M, N, K, handle);
+        // Warmup custom kernel
+        kernel<<<grid, block, sMemSize>>>(d_tma_map_A, d_tma_map_B, C_device, M, K, N);
         CUDA_CHECK(cudaGetLastError());
         CUDA_CHECK(cudaDeviceSynchronize());
+
+        // Time cuBLAS
+        CUDA_CHECK(cudaEventRecord(start));
+        for (int i = 0; i < repeat; i++) {
+            run_gemm_cublas_bf16(A_device, B_device, C_device, M, N, K, handle);
+        }
+        CUDA_CHECK(cudaEventRecord(stop));
+        CUDA_CHECK(cudaEventSynchronize(stop));
+        CUDA_CHECK(cudaEventElapsedTime(&elapsed_time, start, stop));
+        elapsed_time /= 1000.0;
+        double cublas_avg_time = elapsed_time / repeat;
+        double cublas_tflops = flops_per_run / (cublas_avg_time * 1e12);
+
+        // Time custom kernel
+        CUDA_CHECK(cudaEventRecord(start));
+        for (int i = 0; i < repeat; i++) {
+            kernel<<<grid, block, sMemSize>>>(d_tma_map_A, d_tma_map_B, C_device, M, K, N);
+        }
+        CUDA_CHECK(cudaEventRecord(stop));
+        CUDA_CHECK(cudaEventSynchronize(stop));
+        CUDA_CHECK(cudaEventElapsedTime(&elapsed_time, start, stop));
+        elapsed_time /= 1000.0;
+        double custom_avg_time = elapsed_time / repeat;
+        double custom_tflops = flops_per_run / (custom_avg_time * 1e12);
+        double perf_ratio = custom_tflops / cublas_tflops;
+
+        printf("M=N=K=%d  Average elapsed time: %.6f s, TFLOPS: %.1f, cuBLAS TFLOPS: %.1f, Performance relative to cuBLAS: %.1f%%\n",
+               size, custom_avg_time, custom_tflops, cublas_tflops, perf_ratio * 100.0);
+
+        CUDA_CHECK(cudaFree(d_tma_map_A));
+        CUDA_CHECK(cudaFree(d_tma_map_B));
     }
 
-    // Main kernel launch for profiling
-    std::cout << "Running main kernel for profiling..." << std::endl;
-    kernel<<<grid, block, sMemSize>>>(d_tma_map_A, d_tma_map_B, C_device, size, size, size, alpha, beta);
-    CUDA_CHECK(cudaGetLastError());
-    CUDA_CHECK(cudaDeviceSynchronize());
-
-    std::cout << "Kernel launch completed successfully" << std::endl;
-
-    return 0;  // ResourceManager destructor will handle cleanups
+    return 0;
 }

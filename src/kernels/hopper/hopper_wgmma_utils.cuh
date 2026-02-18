@@ -85,6 +85,24 @@ __device__ void warpgroup_wait() {
 }
 
 /**
+ * @brief Increase max register count for the warp group (e.g. for consumer warp groups doing WGMMA).
+ * @cite PTX setmaxnreg.inc.sync.aligned
+ */
+template <uint32_t RegCount>
+__device__ void warpgroup_reg_alloc() {
+    asm volatile("setmaxnreg.inc.sync.aligned.u32 %0;\n" : : "n"(RegCount));
+}
+
+/**
+ * @brief Decrease max register count for the warp group (e.g. for producer warp group to free regs).
+ * @cite PTX setmaxnreg.dec.sync.aligned
+ */
+template <uint32_t RegCount>
+__device__ void warpgroup_reg_dealloc() {
+    asm volatile("setmaxnreg.dec.sync.aligned.u32 %0;\n" : : "n"(RegCount));
+}
+
+/**
  * @note Accumulator floats per thread (per one WGMMA issue) = (WGMMA_M * WGMMA_N) / NUM_THREADS
  */
 template <int ScaleD, int ScaleA, int ScaleB, int TransA, int TransB>
