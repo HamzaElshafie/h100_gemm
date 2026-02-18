@@ -179,9 +179,11 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
             #define IDX_GMEM(r, c) ((c) * M + (r))
             #define IDX_SMEM(r, c) ((c) * TILE_M_PAD + (r))
 
+            #pragma unroll
             // Phase 1: alpha-scaled accumulators -> shared staging tile
             for (int m_iter = 0; m_iter < rows_per_consumer_warp_group / WGMMA_M; m_iter++) {
                 int row_tile_base_C = (consumer_warp_group_idx * rows_per_consumer_warp_group) + (m_iter * WGMMA_M);
+                #pragma unroll
                 for (int w = 0; w < WGMMA_N / 16; w++) {
                     int col = 16 * w + 2 * (tid % 4);
                     s.C_epi[IDX_SMEM(row + row_tile_base_C, col)] = __float2bfloat16(alpha * d[m_iter][w][0]);
@@ -201,6 +203,7 @@ gemm_bf16_pc_pipeline(CUtensorMap* tensorMapA, CUtensorMap* tensorMapB, bf16* C,
             int group_base_row = consumer_warp_group_idx * rows_per_consumer_warp_group;
             if (row4_in_group < rows_per_consumer_warp_group) {
                 int r0 = group_base_row + row4_in_group;
+                #pragma unroll
                 for (int c = warp; c < TILE_SIZE_N; c += 4) {
                     block_C[IDX_GMEM(r0 + 0, c)] = __float2bfloat16(__bfloat162float(s.C_epi[IDX_SMEM(r0 + 0, c)]) + beta * __bfloat162float(block_C[IDX_GMEM(r0 + 0, c)]));
                     block_C[IDX_GMEM(r0 + 1, c)] = __float2bfloat16(__bfloat162float(s.C_epi[IDX_SMEM(r0 + 1, c)]) + beta * __bfloat162float(block_C[IDX_GMEM(r0 + 1, c)]));
